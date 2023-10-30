@@ -14,10 +14,15 @@ The pipeline consists of the following components:
 
 Modify `config/config_biosamples.tsv` with your multiome data
 
+When running for the first time, the conda environments have to be setup.
+For speed, it's recommended that your current environment has mamba installed
 ```
-mamba env create -f workflow/envs/sc_e2g.yml
-conda activate sc_e2g
-snakemake -j1
+conda install -c conda-forge mamba -y
+snakemake -j1 --use-conda
 ```
 
-Output will show up in the `results/` directory
+Output will show up in the `results/` directory by default
+
+## Training the Model
+
+(Maya to fill out)

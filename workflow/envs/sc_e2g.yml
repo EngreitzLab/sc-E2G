@@ -14,7 +14,7 @@ dependencies:
   - python>=3.6
   - pigz
   - snakemake>=7.0
-  - scikit-learn=1.2.1  # Must match with ENCODE-E2G version
+  - scikit-learn=1.2.1  # Must match with ENCODE-rE2G version
   - scipy
   - wget
   - r-base
@@ -25,3 +25,4 @@ dependencies:
   - r-ggcorrplot
   - seaborn
   - matplotlib
+  - bioconductor-genomicranges

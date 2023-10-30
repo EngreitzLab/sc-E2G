@@ -39,14 +39,32 @@ rule all:
 		expand(
 			os.path.join(RESULTS_DIR, "{biosample}", "encode_e2g_predictions.tsv.gz"), biosample=BIOSAMPLES
 		),
-		expand(
-			os.path.join(RESULTS_DIR, "{biosample}", f"encode_e2g_predictions_threshold{config['threshold']}.tsv.gz"), biosample=BIOSAMPLES
-		),
-		os.path.join(RESULTS_DIR, f"qc_plots_threshold{config['threshold']}.pdf")
+		# Wei-Lin: Generate the following output file
 		# expand(
-		# 	os.path.join(RESULTS_DIR, "{biosample}", "EPCrisprBenchmark_ensemble_data_GRCh38.K562_ActivityOnly_features_{nafill}.tsv.gz"), nafill = ["withNA", "NAfilled"], biosample=BIOSAMPLES
+		# 	os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative_Kendall.tsv.gz"), biosample=BIOSAMPLES
 		# )
-	
+
+
+### Wei-Lin: fill out
+rule kendall_correlation:
+	input:
+		abc_predictions = os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative.tsv.gz"),
+		# Whatever else you need ...
+		# e.g candidate_regions = os.path.join(RESULTS_DIR, "{biosample}", "Peaks", "macs2_peaks.narrowPeak.sorted.candidateRegions.bed"),
+
+	output:
+		predictions_w_kendall = os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative_Kendall.tsv.gz"), 
+
+
+### Maya: fill out
+# rule train_e2g:
+# 	input:
+# 		crispr_data = os.path.join(RESULTS_DIR, "{biosample}", "EPCrisprBenchmark_ensemble_data_GRCh38.K562_ActivityOnly_features_{nafill}.tsv.gz")
+# 		enhancer_list = os.path.join(RESULTS_DIR, "{biosample}", "Neighborhoods", "EnhancerList.txt"),
+# 		...
+# 	output:
+# 		models_dir = ...
+
 
 rule gen_new_features: 
 	input:
@@ -56,7 +74,7 @@ rule gen_new_features:
 		gene_TSS500 = config['gene_TSS500'],
 		chr_sizes = config['chr_sizes']
 	conda:
-		"envs/encode_e2g_features.yml"
+		"envs/sc_e2g.yml"
 	resources:
 		mem_mb=32*1000
 	output: 
@@ -91,7 +109,7 @@ rule activity_only_features:
 	output: 
 		predictions_extended = os.path.join(RESULTS_DIR, "{biosample}", "ActivityOnly_features.tsv.gz")
 	conda:
-		"envs/encode_e2g_features.yml"
+		"envs/sc_e2g.yml"
 	resources:
 		mem_mb=32*1000
 	script:
@@ -110,7 +128,7 @@ rule overlap_activity_only_features_crispr:
 		filter_genes = "none",
 		activity = lambda wildcards: BIOSAMPLE_ACTIVITES[wildcards.biosample]
 	conda:
-		"envs/encode_e2g_features.yml" 
+		"envs/sc_e2g.yml" 
 	resources:
 		mem_mb=32*1000
 	script:
@@ -125,7 +143,7 @@ rule generate_e2g_predictions:
 		epsilon = config["epsilon"],
 		models_dir = lambda wildcards: config["models_dir"][BIOSAMPLE_ACTIVITES[wildcards.biosample]]
 	conda:
-		"envs/encode_e2g_features.yml"
+		"envs/sc_e2g.yml"
 	resources:
 		mem_mb=32*1000
 	output: 
@@ -146,7 +164,7 @@ rule filter_e2g_predictions:
 	params:
 		threshold = config["threshold"],
 	conda:
-		"envs/encode_e2g_features.yml"
+		"envs/sc_e2g.yml"
 	resources:
 		mem_mb=4*1000
 	output:
@@ -160,7 +178,7 @@ rule get_stats:
 	input:
 		thresholded = os.path.join(RESULTS_DIR, "{biosample}", "encode_e2g_predictions_threshold{threshold}.tsv.gz")
 	conda:
-		"envs/encode_e2g_features.yml"
+		"envs/sc_e2g.yml"
 	resources:
 		mem_mb=4*1000
 	output:
@@ -176,7 +194,7 @@ rule generate_plots:
 			os.path.join(RESULTS_DIR, "{biosample}", f"encode_e2g_predictions_threshold{config['threshold']}_stats.tsv"), biosample=BIOSAMPLES
 		)
 	conda:
-		"envs/encode_e2g_features.yml"
+		"envs/sc_e2g.yml"
 	resources:
 		mem_mb=4*1000
 	output:
