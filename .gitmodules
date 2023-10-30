@@ -1,0 +1,3 @@
+[submodule "ABC"]
+	path = ABC
+	url = https://github.com/broadinstitute/ABC-Enhancer-Gene-Prediction.git

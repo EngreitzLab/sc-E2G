@@ -1,15 +1,22 @@
-# ENCODE E2G Features
-Generate [Encode E2G](https://github.com/karbalayghareh/ENCODE-E2G) input features based on [ABC](https://github.com/broadinstitute/ABC-Enhancer-Gene-Prediction) output
+# sc-E2G
+Pipeline for running single cell ENCODE E2G.
 
-Supports running ENCODE E2G with a pre-trained model. Put the pretrained model in the config, under `models_dir`
+Input: Multiome dataset (ATAC and RNA)
+Output: Enhancer -> Gene Predictions
+
+The pipeline consists of the following components:
+1. Compute ABC model predictions
+2. Compute Kendall Correlation
+3. Based on 1 & 2, construct a feature file to be used as input to the ML model
+4. Have ML model make predictions (assigning a score to each E-G pair)
 
 ## Usage
 
-Modify `config/config.yml` with your ABC biosamples config
+Modify `config/config_biosamples.tsv` with your multiome data
 
 ```
-mamba env create -f workflow/envs/encode_e2g_features.yml
-conda activate encode_e2g_features
+mamba env create -f workflow/envs/sc_e2g.yml
+conda activate sc_e2g
 snakemake -j1
 ```
 
