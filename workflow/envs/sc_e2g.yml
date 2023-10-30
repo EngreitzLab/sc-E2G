@@ -1,0 +1,27 @@
+name: sc_e2g
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+  - anaconda
+  - r
+dependencies:
+  - bedtools=2.29.2
+  - click
+  - csvtk
+  - numpy
+  - pandas
+  - python>=3.6
+  - pigz
+  - snakemake>=7.0
+  - scikit-learn=1.2.1  # Must match with ENCODE-E2G version
+  - scipy
+  - wget
+  - r-base
+  - r-r.utils
+  - r-data.table
+  - r-tidyverse
+  - r-ggpubr
+  - r-ggcorrplot
+  - seaborn
+  - matplotlib

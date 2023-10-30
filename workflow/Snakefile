@@ -1,0 +1,190 @@
+from snakemake.utils import min_version
+min_version("7.0")
+
+import pandas as pd
+import os
+import yaml
+
+
+configfile: "config/config.yml"
+conda: "mamba"
+
+RESULTS_DIR = config["results_dir"]
+
+def get_abc_config(config):
+	abc_config_file = os.path.join(config["ABC_DIR_PATH"], "config/config.yaml")
+	with open(abc_config_file, 'r') as stream:
+		abc_config = yaml.safe_load(stream)
+	abc_config["ABC_DIR_PATH"] = config["ABC_DIR_PATH"]
+	abc_config["biosamplesTable"] = config["ABC_BIOSAMPLES"]
+	return abc_config
+
+
+module ABC:
+    snakefile:
+        "../ABC/workflow/Snakefile"
+    config: get_abc_config(config)
+
+use rule * from ABC exclude all as abc_*
+
+BIOSAMPLE_DF = pd.read_csv(config["ABC_BIOSAMPLES"], sep="\t")
+BIOSAMPLES = BIOSAMPLE_DF["biosample"].to_list()
+BIOSAMPLE_ACTIVITES = {
+	biosample: activity for _, (biosample, activity) in 
+	BIOSAMPLE_DF[["biosample", "default_accessibility_feature"]].iterrows()
+}
+
+rule all:
+	input: 
+		expand(
+			os.path.join(RESULTS_DIR, "{biosample}", "encode_e2g_predictions.tsv.gz"), biosample=BIOSAMPLES
+		),
+		expand(
+			os.path.join(RESULTS_DIR, "{biosample}", f"encode_e2g_predictions_threshold{config['threshold']}.tsv.gz"), biosample=BIOSAMPLES
+		),
+		os.path.join(RESULTS_DIR, f"qc_plots_threshold{config['threshold']}.pdf")
+		# expand(
+		# 	os.path.join(RESULTS_DIR, "{biosample}", "EPCrisprBenchmark_ensemble_data_GRCh38.K562_ActivityOnly_features_{nafill}.tsv.gz"), nafill = ["withNA", "NAfilled"], biosample=BIOSAMPLES
+		# )
+	
+
+rule gen_new_features: 
+	input:
+		abc_predictions = os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative.tsv.gz"),
+		enhancer_list = os.path.join(RESULTS_DIR, "{biosample}", "Neighborhoods", "EnhancerList.txt"),
+	params:
+		gene_TSS500 = config['gene_TSS500'],
+		chr_sizes = config['chr_sizes']
+	conda:
+		"envs/encode_e2g_features.yml"
+	resources:
+		mem_mb=32*1000
+	output: 
+		NumCandidateEnhGene = os.path.join(RESULTS_DIR, "{biosample}", "NumCandidateEnhGene.tsv"),
+		NumTSSEnhGene = os.path.join(RESULTS_DIR, "{biosample}", "NumTSSEnhGene.tsv"),
+		NumEnhancersEG5kb = os.path.join(RESULTS_DIR, "{biosample}", "NumEnhancersEG5kb.txt"),
+		SumEnhancersEG5kb = os.path.join(RESULTS_DIR, "{biosample}", "SumEnhancersEG5kb.txt"),
+		NumEnhancersEG10kb = os.path.join(RESULTS_DIR, "{biosample}", "NumEnhancersEG10kb.txt"),
+		SumEnhancersEG10kb = os.path.join(RESULTS_DIR, "{biosample}", "SumEnhancersEG10kb.txt"),
+	shell: 
+		""" 
+		python workflow/scripts/gen_new_features.py \
+			--enhancer_list {input.enhancer_list} \
+			--abc_predictions {input.abc_predictions} \
+			--ref_gene_tss {params.gene_TSS500} \
+			--chr_sizes {params.chr_sizes} \
+			--results_dir {RESULTS_DIR}/{wildcards.biosample}
+		"""
+
+# create activity-only feature table
+rule activity_only_features:
+	input:
+		feature_config = "config/feature_config.tsv",
+		abc = os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative.tsv.gz"),
+		NumCandidateEnhGene = os.path.join(RESULTS_DIR, "{biosample}", "NumCandidateEnhGene.tsv"),
+		NumTSSEnhGene = os.path.join(RESULTS_DIR, "{biosample}", "NumTSSEnhGene.tsv"),
+		NumEnhancersEG5kb = os.path.join(RESULTS_DIR, "{biosample}", "NumEnhancersEG5kb.txt"),
+		SumEnhancersEG5kb = os.path.join(RESULTS_DIR, "{biosample}", "SumEnhancersEG5kb.txt"),
+		ubiqExprGenes = config["ubiq_expr_genes"]
+	params:
+		activity = lambda wildcards: BIOSAMPLE_ACTIVITES[wildcards.biosample]
+	output: 
+		predictions_extended = os.path.join(RESULTS_DIR, "{biosample}", "ActivityOnly_features.tsv.gz")
+	conda:
+		"envs/encode_e2g_features.yml"
+	resources:
+		mem_mb=32*1000
+	script:
+		"scripts/activity_only_features.R"
+
+# overlap activity-only feature table table with K562 CRISPR data
+rule overlap_activity_only_features_crispr:
+	input:
+		features = os.path.join(RESULTS_DIR, "{biosample}/ActivityOnly_features.tsv.gz"),
+		crispr = config['crispr_dataset'],
+		config = config['feature_config'],
+		tss = config['gene_TSS500']
+	output: 
+		os.path.join(RESULTS_DIR, "{biosample}", "EPCrisprBenchmark_ensemble_data_GRCh38.K562_ActivityOnly_features_{nafill}.tsv.gz")
+	params:
+		filter_genes = "none",
+		activity = lambda wildcards: BIOSAMPLE_ACTIVITES[wildcards.biosample]
+	conda:
+		"envs/encode_e2g_features.yml" 
+	resources:
+		mem_mb=32*1000
+	script:
+		"scripts/overlap_features_with_crispr_data.R"
+
+
+rule generate_e2g_predictions:
+	input:
+		predictions_extended = os.path.join(RESULTS_DIR, "{biosample}", "ActivityOnly_features.tsv.gz"),
+	params:
+		feature_table_file = lambda wildcards: config["feature_table"][BIOSAMPLE_ACTIVITES[wildcards.biosample]],
+		epsilon = config["epsilon"],
+		models_dir = lambda wildcards: config["models_dir"][BIOSAMPLE_ACTIVITES[wildcards.biosample]]
+	conda:
+		"envs/encode_e2g_features.yml"
+	resources:
+		mem_mb=32*1000
+	output: 
+		prediction_file = os.path.join(RESULTS_DIR, "{biosample}", "encode_e2g_predictions.tsv.gz")
+	shell: 
+		""" 
+		python workflow/scripts/run_e2g.py \
+			--predictions {input.predictions_extended} \
+			--feature_table_file {params.feature_table_file} \
+			--epsilon {params.epsilon} \
+			--models_dir {params.models_dir} \
+			--output_file {output.prediction_file}
+		"""
+
+rule filter_e2g_predictions:
+	input:
+		prediction_file = os.path.join(RESULTS_DIR, "{biosample}", "encode_e2g_predictions.tsv.gz")
+	params:
+		threshold = config["threshold"],
+	conda:
+		"envs/encode_e2g_features.yml"
+	resources:
+		mem_mb=4*1000
+	output:
+		thresholded = os.path.join(RESULTS_DIR, "{biosample}", "encode_e2g_predictions_threshold{threshold}.tsv.gz")
+	shell:
+		"""
+		zcat {input.prediction_file} | awk -F'\t' '$NF >= {params.threshold}' | gzip > {output.thresholded}
+		"""
+
+rule get_stats:
+	input:
+		thresholded = os.path.join(RESULTS_DIR, "{biosample}", "encode_e2g_predictions_threshold{threshold}.tsv.gz")
+	conda:
+		"envs/encode_e2g_features.yml"
+	resources:
+		mem_mb=4*1000
+	output:
+		stats = os.path.join(RESULTS_DIR, "{biosample}", "encode_e2g_predictions_threshold{threshold}_stats.tsv")
+	shell:
+		"""
+		python workflow/scripts/get_stats.py --predictions {input.thresholded} --output_file {output.stats}
+		"""
+
+rule generate_plots:
+	input:
+		expand(
+			os.path.join(RESULTS_DIR, "{biosample}", f"encode_e2g_predictions_threshold{config['threshold']}_stats.tsv"), biosample=BIOSAMPLES
+		)
+	conda:
+		"envs/encode_e2g_features.yml"
+	resources:
+		mem_mb=4*1000
+	output:
+		plots = os.path.join(RESULTS_DIR, "qc_plots_threshold{threshold}.pdf")
+	shell:
+		"""
+		python workflow/scripts/generate_plots.py \
+			--results_dir {RESULTS_DIR} \
+			--output_file {output.plots} \
+			# --y2ave_metadata /oak/stanford/groups/engreitz/Users/atan5133/igvf_dataset_processing/Y2AVE_SingleCellDatasets.CellClusterTable.tsv
+		"""
