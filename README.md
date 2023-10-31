@@ -28,6 +28,8 @@ Running the pipeline:
 ```
 snakemake -j1 --use-conda
 ```
+This command make take a while the first time you run it, as it needs to build the conda environments. 
+But if it takes more than 1 hour, that's usually a bad sign, meaning that you're not using mamba.
 
 Output will show up in the `results/` directory by default
 
