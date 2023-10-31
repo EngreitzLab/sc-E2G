@@ -11,6 +11,8 @@ The pipeline consists of the following components:
 4. Have ML model make predictions (assigning a score to each E-G pair)
 
 ## Usage
+clone this repo
+`git submodule update --init`
 
 Modify `config/config_biosamples.tsv` with your multiome data
 
