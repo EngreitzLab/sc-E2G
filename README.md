@@ -19,7 +19,13 @@ Modify `config/config_biosamples.tsv` with your multiome data
 When running for the first time, the conda environments have to be setup.
 For speed, it's recommended that your current environment has mamba installed
 ```
-conda install -c conda-forge mamba -y
+conda create -n mamba -c conda-forge mamba
+conda activate mamba
+mamba install snakemake
+```
+
+Running the pipeline:
+```
 snakemake -j1 --use-conda
 ```
 
