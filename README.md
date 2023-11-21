@@ -21,7 +21,7 @@ For speed, it's recommended that your current environment has mamba installed
 ```
 conda create -n mamba -c conda-forge mamba
 conda activate mamba
-mamba install -c bioconda snakemake
+mamba install -c conda-forge -c bioconda snakemake
 ```
 
 Running the pipeline:
