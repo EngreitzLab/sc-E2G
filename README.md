@@ -23,6 +23,10 @@ conda create -n mamba -c conda-forge mamba
 conda activate mamba
 mamba install -c conda-forge -c bioconda snakemake
 ```
+Make sure your conda config uses flexible channel packaging to prevent unsatisfiable errors
+```
+conda config --set channel_priority flexible
+```
 
 Running the pipeline:
 ```
