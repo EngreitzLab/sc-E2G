@@ -18,8 +18,9 @@ feature_config: "config/feature_config.tsv"
 crispr_dataset: "resources/EPCrisprBenchmark_ensemble_data_GRCh38.tsv.gz"
 
 # Kendall Correlation
-# Wei-Lin: Add any params to your kendall correlation scripts here. There are additional 
-# reference files in ABC/reference/ subdirectory that you can use
+kendall_candidate_e2g_pairs: "example_kendall_chr22/kendall_candidate_e2g_pairs.tsv.gz"
+sc_atac_matix: "example_kendall_chr22/ATAC_matrix.csv"
+sc_rna_matix: "example_kendall_chr22/RNA_matrix.csv"
 
 # ENCODE E2G
 feature_table: 
