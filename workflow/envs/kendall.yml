@@ -1,0 +1,12 @@
+name: kendall
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+  - anaconda
+  - r
+dependencies:
+  - r-base
+  - bioconductor-genomicranges
+  - bioconductor-genomation
+  - r-foreach
