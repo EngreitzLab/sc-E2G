@@ -40,20 +40,34 @@ rule all:
 			os.path.join(RESULTS_DIR, "{biosample}", "encode_e2g_predictions.tsv.gz"), biosample=BIOSAMPLES
 		),
 		# Wei-Lin: Generate the following output file
-		# expand(
-		# 	os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative_Kendall.tsv.gz"), biosample=BIOSAMPLES
-		# )
+		expand(
+			os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative_ARC.tsv.gz"), biosample=BIOSAMPLES
+		)
 
 
 ### Wei-Lin: fill out
 rule kendall_correlation:
 	input:
-		abc_predictions = os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative.tsv.gz"),
-		# Whatever else you need ...
-		# e.g candidate_regions = os.path.join(RESULTS_DIR, "{biosample}", "Peaks", "macs2_peaks.narrowPeak.sorted.candidateRegions.bed"),
-
+		kendall_candidate_e2g_pairs = config["kendall_candidate_e2g_pairs"],
+		sc_atac_matix = config["sc_atac_matix"],
+		sc_rna_matix = config["sc_rna_matix"],
 	output:
-		predictions_w_kendall = os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative_Kendall.tsv.gz"), 
+		kendall_predictions = os.path.join(RESULTS_DIR, "Kendall", "EnhancerPredictionsAllPutative_Kendall.tsv.gz"), 
+	conda:
+		"envs/kendall.yml"
+	script:
+		"scripts/compute_kendall.R"
+
+rule arc_e2g:
+	input:
+		abc_predictions = os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative.tsv.gz"),
+		kendall_predictions = os.path.join(RESULTS_DIR, "Kendall", "EnhancerPredictionsAllPutative_Kendall.tsv.gz"),
+	output:
+		arc_predictions = os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative_ARC.tsv.gz"),
+	conda:
+		"envs/kendall.yml"
+	script:
+                "scripts/compute_arc_e2g.R"
 
 
 ### Maya: fill out
