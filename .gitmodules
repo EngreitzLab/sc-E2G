@@ -1,3 +1,3 @@
-[submodule "ABC"]
-	path = ABC
-	url = https://github.com/broadinstitute/ABC-Enhancer-Gene-Prediction.git
+[submodule "encode_e2g_features"]
+	path = encode_e2g_features
+	url = https://github.com/EngreitzLab/encode_e2g_features
