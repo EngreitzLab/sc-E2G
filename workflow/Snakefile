@@ -27,13 +27,13 @@ def make_paths_absolute(obj, base_path):
 
 config = make_paths_absolute(config, os.getcwd())
 RESULTS_DIR = config["results_dir"]
-e2g_DIR_PATH = config["e2g_DIR_PATH"]
+E2G_DIR_PATH = config["E2G_DIR_PATH"]
 
 def get_e2g_config(config):
-	e2g_config_file = os.path.join(e2g_DIR_PATH, "config/config.yaml")
+	e2g_config_file = os.path.join(E2G_DIR_PATH, "config/config.yaml")
 	with open(e2g_config_file, 'r') as stream:
 		e2g_config = yaml.safe_load(stream)
-	e2g_config["e2g_DIR_PATH"] = e2g_DIR_PATH
+	e2g_config["E2G_DIR_PATH"] = E2G_DIR_PATH
 	e2g_config["ABC_BIOSAMPLES"] = config["ABC_BIOSAMPLES"]
 	e2g_config["results_dir"] = config["results_dir"]
 	return e2g_config
@@ -41,7 +41,7 @@ def get_e2g_config(config):
 
 module encode_e2g:
 	snakefile:
-		f"{e2g_DIR_PATH}/workflow/Snakefile"
+		f"{E2G_DIR_PATH}/workflow/Snakefile"
 	config: get_e2g_config(config)
 
 use rule * from encode_e2g

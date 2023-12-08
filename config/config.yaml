@@ -6,5 +6,5 @@ ABC_BIOSAMPLES: "config/config_biosamples.tsv"
 results_dir: "results/"
 
 ### PARAMS
-e2g_DIR_PATH: "encode_e2g_features"
+E2G_DIR_PATH: "ENCODE_rE2G"
 
