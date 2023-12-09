@@ -26,6 +26,10 @@ def make_paths_absolute(obj, base_path):
 	return obj
 
 config = make_paths_absolute(config, os.getcwd())
+# Need to manually make results_dir an absolute path since above may
+# not work if results_dir folder isn't created
+# If results_dir is already an absolute path, this is a no-op
+config["results_dir"] = os.path.join(os.getcwd(), config["results_dir"])
 RESULTS_DIR = config["results_dir"]
 E2G_DIR_PATH = config["E2G_DIR_PATH"]
 
