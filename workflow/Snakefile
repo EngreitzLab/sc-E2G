@@ -48,7 +48,20 @@ module encode_e2g:
 		f"{E2G_DIR_PATH}/workflow/Snakefile"
 	config: get_e2g_config(config)
 
-use rule * from encode_e2g
+use rule * from encode_e2g exclude gen_final_features
+
+
+rule gen_final_features:
+	input:
+		predictions_extended = os.path.join(RESULTS_DIR, "{biosample}", "ActivityOnly_features.tsv.gz"),
+	output:
+		# This output filename is important; do not change
+		# We will go through this rule instead of the `gen_final_features` in the E2G submodule
+		final_features = os.path.join(RESULTS_DIR, "{biosample}", "final_features.tsv.gz")
+	shell:
+		"""
+		# Add features to the input file so that we can train/predict with the E2G model
+		"""
 
 ### Wei-Lin: fill out
 rule kendall_correlation:
