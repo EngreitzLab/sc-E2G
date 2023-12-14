@@ -1,0 +1,10 @@
+
+### INPUT
+ABC_BIOSAMPLES: "config/config_biosamples.tsv"
+
+### OUTPUT
+results_dir: "results/"
+
+### PARAMS
+E2G_DIR_PATH: "ENCODE_rE2G"
+
