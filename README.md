@@ -19,9 +19,6 @@ git clone --recurse-submodules https://github.com/EngreitzLab/sc-E2G.git
 git config --global submodule.recurse true
 ```
 
-## Apply model
-Modify `config/config_biosamples.tsv` with your multiome data
-
 When running for the first time, the conda environments have to be setup.
 For speed, it's recommended that your current environment has mamba installed
 
@@ -31,6 +28,9 @@ conda create -n mamba -c conda-forge mamba
 conda activate mamba
 mamba install -c conda-forge -c bioconda snakemake
 ```
+
+## Apply model
+Modify `config/config_biosamples.tsv` with your multiome data, including RNA_matrix, ATAC_matrix, and candidate_pairs files. 
 
 Running the pipeline:
 ```
@@ -49,14 +49,11 @@ Modify `config/config_training.yaml` with your model and dataset configs
 - `model_config` has columns: model, dataset, ABC_directory, feature_table, polynomial (do you want to use polynomial features?) 
 Note that trained models generated using polynomial features cannot directly be used in the **Apply model** workflow
 - `dataset_config` has rows representing each "dataset"  in `model_config`, where each "dataset" must correspond to a "biosample" in `dataset_config`
-    - Each "dataset"/"biosample" must have an ATAC_matrix, RNA_matrix, and candidate_pairs
+    - Each "dataset"/"biosample" **must** have an ATAC_matrix, RNA_matrix, and candidate_pairs
     - If an ABC_directory is not specified for a dataset, its entry in `dataset_config` must also contain the required ABC biosample parameters
     - TO DO: specify how to generate and formats for Kendall parameters
 
-Activate a conda environment that has mamba installed.
-
+Running the pipeline
 ```
-mamba env create -f workflow/envs/encode_re2g.yml 
-conda activate encode_re2g 
 snakemake -s workflow/Snakefile_training -j1 --use-conda
 ```

@@ -9,6 +9,8 @@ import yaml
 configfile: "config/config.yaml"
 conda: "mamba"
 
+BIOSAMPLE_DF = pd.read_table(config["ABC_BIOSAMPLES"], na_values="").set_index("biosample", drop=False)
+
 def make_paths_absolute(obj, base_path):
 	"""
 	Use absolute paths to be compatible with github submodules
@@ -32,6 +34,8 @@ config = make_paths_absolute(config, os.getcwd())
 config["results_dir"] = os.path.join(os.getcwd(), config["results_dir"])
 RESULTS_DIR = config["results_dir"]
 E2G_DIR_PATH = config["E2G_DIR_PATH"]
+MODEL_DIR = config["model_dir"]
+include: os.path.join(E2G_DIR_PATH, "workflow", "rules", "utils.smk")
 
 def get_e2g_config(config):
 	e2g_config_file = os.path.join(E2G_DIR_PATH, "config/config.yaml")
@@ -40,45 +44,50 @@ def get_e2g_config(config):
 	e2g_config["E2G_DIR_PATH"] = E2G_DIR_PATH
 	e2g_config["ABC_BIOSAMPLES"] = config["ABC_BIOSAMPLES"]
 	e2g_config["results_dir"] = config["results_dir"]
+	e2g_config["model_dir"] = config["model_dir"]
+	config["MEGAMAP_HIC_FILE"] = e2g_config["MEGAMAP_HIC_FILE"]
 	return e2g_config
-
 
 module encode_e2g:
 	snakefile:
 		f"{E2G_DIR_PATH}/workflow/Snakefile"
 	config: get_e2g_config(config)
 
-use rule * from encode_e2g exclude gen_final_features
+use rule * from encode_e2g exclude add_external_features
 
-
-rule gen_final_features:
+rule add_external_features:
 	input:
 		predictions_extended = os.path.join(RESULTS_DIR, "{biosample}", "ActivityOnly_features.tsv.gz"),
+		arc_predictions = os.path.join(RESULTS_DIR, "{biosample}", "EnhancerPredictionsAllPutative_ARC.tsv.gz"),
+		feature_table_file = lambda wildcards: get_feature_table_file(wildcards.biosample)
 	output:
-		# This output filename is important; do not change
-		# We will go through this rule instead of the `gen_final_features` in the E2G submodule
-		final_features = os.path.join(RESULTS_DIR, "{biosample}", "final_features.tsv.gz")
-	shell:
-		"""
-		# Add features to the input file so that we can train/predict with the E2G model
-		"""
+		plus_external_features = os.path.join(RESULTS_DIR, "{biosample}", "ActivityOnly_plus_external_features.tsv.gz")
+	conda:
+		"envs/sc_e2g.yml"
+	script:
+		"scripts/integrate_kendall.R"
 
-### Wei-Lin: fill out
 rule kendall_correlation:
 	input:
-		abc_predictions = os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative.tsv.gz"),
-		# Whatever else you need ...
-		# e.g candidate_regions = os.path.join(RESULTS_DIR, "{biosample}", "Peaks", "macs2_peaks.narrowPeak.sorted.candidateRegions.bed"),
-
+		kendall_candidate_e2g_pairs = lambda wildcards: BIOSAMPLE_DF.loc[wildcards.biosample, 'candidate_pairs'],
+		sc_atac_matix = lambda wildcards: BIOSAMPLE_DF.loc[wildcards.biosample, 'ATAC_matrix'],
+		sc_rna_matix = lambda wildcards: BIOSAMPLE_DF.loc[wildcards.biosample, 'RNA_matrix']
 	output:
-		predictions_w_kendall = os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative_Kendall.tsv.gz"), 
+		kendall_predictions = os.path.join(RESULTS_DIR, "{biosample}", "EnhancerPredictionsAllPutative_Kendall.tsv.gz") 
+	conda:
+		"envs/sc_e2g.yml"
+	script:
+		"scripts/compute_kendall.R"
 
+rule arc_e2g:
+	input:
+		abc_predictions = os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative.tsv.gz"),
+		kendall_predictions = os.path.join(RESULTS_DIR, "{biosample}", "EnhancerPredictionsAllPutative_Kendall.tsv.gz")
+	output:
+		arc_predictions = os.path.join(RESULTS_DIR, "{biosample}", "EnhancerPredictionsAllPutative_ARC.tsv.gz")
+	conda:
+		"envs/sc_e2g.yml"
+	script:
+		"scripts/compute_arc_e2g.R"
 
-### Maya: fill out
-# rule train_e2g:
-# 	input:
-# 		crispr_data = os.path.join(RESULTS_DIR, "{biosample}", "EPCrisprBenchmark_ensemble_data_GRCh38.K562_ActivityOnly_features_{nafill}.tsv.gz")
-# 		enhancer_list = os.path.join(RESULTS_DIR, "{biosample}", "Neighborhoods", "EnhancerList.txt"),
-# 		...
-# 	output:
-# 		models_dir = ...
+	
