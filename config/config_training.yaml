@@ -1,0 +1,12 @@
+
+### INPUT
+model_config: "config/config_models.tsv"
+dataset_config: "config/config_datasets.tsv"
+run_feature_analysis: True
+
+### OUTPUT
+results_dir: "results_chr22_test/"
+
+### PARAMS
+E2G_DIR_PATH: "ENCODE_rE2G"
+
