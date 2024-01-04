@@ -53,7 +53,7 @@ Note that trained models generated using polynomial features cannot directly be 
     - If an ABC_directory is not specified for a dataset, its entry in `dataset_config` must also contain the required ABC biosample parameters
     - TO DO: specify how to generate and formats for Kendall parameters
 
-Running the pipeline
+Running the pipeline:
 ```
 snakemake -s workflow/Snakefile_training -j1 --use-conda
 ```

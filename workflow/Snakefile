@@ -34,7 +34,7 @@ config = make_paths_absolute(config, os.getcwd())
 config["results_dir"] = os.path.join(os.getcwd(), config["results_dir"])
 RESULTS_DIR = config["results_dir"]
 E2G_DIR_PATH = config["E2G_DIR_PATH"]
-MODEL_DIR = config["model_dir"]
+MODEL_DIR = config["model_dir"] # used in utils.smk to get correct model
 include: os.path.join(E2G_DIR_PATH, "workflow", "rules", "utils.smk")
 
 def get_e2g_config(config):
