@@ -1,10 +1,11 @@
 
 ### INPUT
-ABC_BIOSAMPLES: "config/config_biosamples.tsv"
+ABC_BIOSAMPLES: "config/config_datasets.tsv"
 
 ### OUTPUT
-results_dir: "results/"
+results_dir: "results_test_apply/"
 
 ### PARAMS
 E2G_DIR_PATH: "ENCODE_rE2G"
+model_dir: "models/"
 

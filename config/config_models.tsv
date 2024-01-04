@@ -1,0 +1,2 @@
+model	dataset	ABC_directory	feature_table	polynomial
+ATAC_test	K562_ATAC_chr22		resources/feature_tables/multiome_features.tsv	False

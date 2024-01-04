@@ -26,3 +26,5 @@ dependencies:
   - seaborn
   - matplotlib
   - bioconductor-genomicranges
+  - bioconductor-genomation
+  - r-foreach
