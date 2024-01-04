@@ -8,8 +8,8 @@ The pipeline consists of the following components:
 1. Compute ABC model predictions
 2. Generate E2G features from ABC predictions
 3. Compute Kendall correlation and/or ARC-E2G score
-5. Combine 2 & 3 to construct a feature file to be used as input to predictive model
-6. (optional) Train predictive model using CRISPR-validated E-G pairs from K562 dataset
+4. Combine 2 & 3 to construct a feature file to be used as input to predictive model
+5. (optional) Train predictive model using CRISPR-validated E-G pairs from K562 dataset
 6. Apply trained model to make predictions by assigning a score to each E-G pair
 
 ## Set up
