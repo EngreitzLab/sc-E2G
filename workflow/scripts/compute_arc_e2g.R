@@ -1,6 +1,4 @@
-## Compute Kendall correlation
-
-# required packages
+# Load required packages
 suppressPackageStartupMessages({
   library(GenomicRanges)
   library(genomation)
@@ -8,18 +6,18 @@ suppressPackageStartupMessages({
 
 ## Define functions --------------------------------------------------------------------------------
 
-# add Kendall correlation as a new colunm of ABC prediction
-MyAddMax = function(bed.E2G.A,
-                    bed.E2G.B,
-                    colname.in,
-                    colname.out){
+# Add Kendall correlation as a new colunm of ABC prediction
+AddMax = function(bed.E2G.A,
+                  bed.E2G.B,
+                  colname.in,
+                  colname.out){
   overlaps.res = findOverlaps(bed.E2G.A,
                               bed.E2G.B)
   df.overlaps = as.data.frame(overlaps.res)
   rm(overlaps.res)
   df.overlaps.filter = 
     df.overlaps[bed.E2G.A$TargetGene[df.overlaps$queryHits] == 
-                  bed.E2G.B$gene_name[df.overlaps$subjectHits],]
+                  bed.E2G.B$TargetGene[df.overlaps$subjectHits],]
   rm(df.overlaps)
   
   df.overlaps.filter[,colname.in] = mcols(bed.E2G.B)[df.overlaps.filter$subjectHits,colname.in]
@@ -36,11 +34,11 @@ MyAddMax = function(bed.E2G.A,
   bed.E2G.A
 }
 
-# integrate ABC and Kendall into ARC-E2G
-MyIntergrateABC = function(bed.E2G,
-                           colname.ABC,
-                           colname.feature,
-                           colname.output){
+# Integrate ABC and Kendall into ARC-E2G
+IntergrateABC = function(bed.E2G,
+                         colname.ABC,
+                         colname.feature,
+                         colname.output){
   
   index.exclude_na = !is.na(mcols(bed.E2G)[,colname.ABC]) &
     mcols(bed.E2G)[,colname.ABC] > 0 &
@@ -65,30 +63,35 @@ MyIntergrateABC = function(bed.E2G,
   return(bed.E2G)
 }
 
-# load ABC data
-pairs.E2G.ABC = readGeneric(snakemake@input$abc_predictions,
+# Import parameters from Snakemake
+abc_predictions_path = snakemake@input$abc_predictions
+kendall_predictions_path = snakemake@input$kendall_predictions
+arc_predictions_path = snakemake@output$arc_predictions
+
+# Load ABC data
+pairs.E2G.ABC = readGeneric(abc_predictions_path,
                             keep.all.metadata = T,
                             header = T)
-# load Kendall data
-pairs.E2G.Kendall = readGeneric(snakemake@input$kendall_predictions,
+# Load Kendall data
+pairs.E2G.Kendall = readGeneric(kendall_predictions_path,
                                 keep.all.metadata = T,
                                 header = T)
-# add Kendall correlation as a new colunm of ABC prediction
-pairs.E2G.ABC = MyAddMax(pairs.E2G.ABC,
-                         pairs.E2G.Kendall,
-                         "Kendall",
-                         "Kendall")
+# Add Kendall correlation as a new column of ABC prediction
+pairs.E2G.ABC = AddMax(pairs.E2G.ABC,
+                       pairs.E2G.Kendall,
+                       "Kendall",
+                       "Kendall")
 
-# compute ARE-E2G
-pairs.E2G.ABC = MyIntergrateABC(pairs.E2G.ABC,
-                                "ABC.Score",
-                                "Kendall",
-                                "ARC.E2G.Score")
+# Compute ARE-E2G
+pairs.E2G.ABC = IntergrateABC(pairs.E2G.ABC,
+                              "ABC.Score",
+                              "Kendall",
+                              "ARC.E2G.Score")
 
-# write output to file
+# Write output to file
 write.table(as.data.frame(pairs.E2G.ABC),
-            file = gzfile(snakemake@output$arc_predictions),
-	    row.names = F,
-	    quote = F,
-	    sep = "\t")
+            file = gzfile(arc_predictions_path),
+            row.names = F,
+            quote = F,
+            sep = "\t")
 

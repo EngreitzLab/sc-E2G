@@ -9,85 +9,84 @@ import yaml
 configfile: "config/config.yaml"
 conda: "mamba"
 
-BIOSAMPLE_DF = pd.read_table(config["ABC_BIOSAMPLES"], na_values="").set_index("biosample", drop=False)
 
-def make_paths_absolute(obj, base_path):
-	"""
-	Use absolute paths to be compatible with github submodules
-	Recursively go through the dictionary and convert relative paths to absolute paths.
-	"""
-	if isinstance(obj, dict):
-		for key, value in obj.items():
-			obj[key] = make_paths_absolute(value, base_path)
-	elif isinstance(obj, str):
-		# We assume all strings are paths. If converting the string
-		# to an absolute path results in a valid file, then the str was a path
-		new_file = os.path.join(base_path, obj)
-		if os.path.exists(new_file):
-			return new_file
-	return obj
+include: os.path.join("rules", "utils.smk")
 
-config = make_paths_absolute(config, os.getcwd())
+
+## Update paths in the config to be compatible with github submodules
 # Need to manually make results_dir an absolute path since above may
 # not work if results_dir folder isn't created
 # If results_dir is already an absolute path, this is a no-op
+config = make_paths_absolute(config, os.getcwd())
 config["results_dir"] = os.path.join(os.getcwd(), config["results_dir"])
-RESULTS_DIR = config["results_dir"]
-E2G_DIR_PATH = config["E2G_DIR_PATH"]
-MODEL_DIR = config["model_dir"] # used in utils.smk to get correct model
-include: os.path.join(E2G_DIR_PATH, "workflow", "rules", "utils.smk")
 
-def get_e2g_config(config):
-	e2g_config_file = os.path.join(E2G_DIR_PATH, "config/config.yaml")
-	with open(e2g_config_file, 'r') as stream:
-		e2g_config = yaml.safe_load(stream)
-	e2g_config["E2G_DIR_PATH"] = E2G_DIR_PATH
-	e2g_config["ABC_BIOSAMPLES"] = config["ABC_BIOSAMPLES"]
-	e2g_config["results_dir"] = config["results_dir"]
-	e2g_config["model_dir"] = config["model_dir"]
-	config["MEGAMAP_HIC_FILE"] = e2g_config["MEGAMAP_HIC_FILE"]
-	return e2g_config
 
+## Define global variables
+RESULTS_DIR = config["results_dir"] # used in ENCODE_rE2G/ABC/workflow/rules/macs2.smk 
+
+
+## Convert cell cluster config to a biosample config for the ABC pipeline
+## Treat each cell cluster as a distinct biosample
+make_biosample_config(
+	config["cell_clusters"],
+	os.path.join(
+		config["results_dir"], 
+		"tmp", 
+		"config_abc_biosamples.tsv"
+	),
+	config["results_dir"]
+)
+config["ABC_BIOSAMPLES"] = os.path.join(
+	config["results_dir"], 
+	"tmp", 
+	"config_abc_biosamples.tsv"
+	)
+
+
+## Import ENCODE_rE2G pipeline as a reusable module 
 module encode_e2g:
 	snakefile:
-		f"{E2G_DIR_PATH}/workflow/Snakefile"
-	config: get_e2g_config(config)
+		os.path.join(config["encode_re2g_dir"], "workflow", "Snakefile")
+	config: get_e2g_config(config, config["encode_re2g_dir"])
 
-use rule * from encode_e2g exclude add_external_features
 
-rule add_external_features:
-	input:
-		predictions_extended = os.path.join(RESULTS_DIR, "{biosample}", "ActivityOnly_features.tsv.gz"),
-		arc_predictions = os.path.join(RESULTS_DIR, "{biosample}", "EnhancerPredictionsAllPutative_ARC.tsv.gz"),
-		feature_table_file = lambda wildcards: get_feature_table_file(wildcards.biosample)
-	output:
-		plus_external_features = os.path.join(RESULTS_DIR, "{biosample}", "ActivityOnly_plus_external_features.tsv.gz")
-	conda:
-		"envs/sc_e2g.yml"
-	script:
-		"scripts/integrate_kendall.R"
+## Include Snakemake rules from ENCODE_rE2G
+use rule * from encode_e2g exclude add_external_features, all
 
-rule kendall_correlation:
-	input:
-		kendall_candidate_e2g_pairs = lambda wildcards: BIOSAMPLE_DF.loc[wildcards.biosample, 'candidate_pairs'],
-		sc_atac_matix = lambda wildcards: BIOSAMPLE_DF.loc[wildcards.biosample, 'ATAC_matrix'],
-		sc_rna_matix = lambda wildcards: BIOSAMPLE_DF.loc[wildcards.biosample, 'RNA_matrix']
-	output:
-		kendall_predictions = os.path.join(RESULTS_DIR, "{biosample}", "EnhancerPredictionsAllPutative_Kendall.tsv.gz") 
-	conda:
-		"envs/sc_e2g.yml"
-	script:
-		"scripts/compute_kendall.R"
 
-rule arc_e2g:
-	input:
-		abc_predictions = os.path.join(RESULTS_DIR, "{biosample}", "Predictions", "EnhancerPredictionsAllPutative.tsv.gz"),
-		kendall_predictions = os.path.join(RESULTS_DIR, "{biosample}", "EnhancerPredictionsAllPutative_Kendall.tsv.gz")
-	output:
-		arc_predictions = os.path.join(RESULTS_DIR, "{biosample}", "EnhancerPredictionsAllPutative_ARC.tsv.gz")
-	conda:
-		"envs/sc_e2g.yml"
-	script:
-		"scripts/compute_arc_e2g.R"
+## Include additional Snakemake rules
+include: os.path.join("rules", "generate_frag_file.smk")
+include: os.path.join("rules", "frag_to_tagAlign.smk")
+include: os.path.join("rules", "make_kendall_pairs.smk")
+include: os.path.join("rules", "generate_atac_matrix.smk")
+include: os.path.join("rules", "compute_kendall.smk")
+include: os.path.join("rules", "arc_e2g.smk")
+include: os.path.join("rules", "add_external_features.smk")
 
-	
+
+## Import cell cluster configuration table and make a list of cell clusters
+CELL_CLUSTER_DF = pd.read_table(config["cell_clusters"]).set_index("cluster", drop=False)
+CLUSTER = CELL_CLUSTER_DF["cluster"].to_list()
+
+
+## Define the final outputs of the pipeline
+rule all:
+	input: 
+		encode_e2g_predictions = expand(
+			os.path.join(
+				config["results_dir"], 
+				"{cluster}", 
+				"Predictions", 
+				"encode_e2g_predictions.tsv.gz"
+			), 
+			cluster=CLUSTER
+		),
+		prediction_stats = [os.path.join
+			(
+			config["results_dir"], 
+			f"{cluster}", 
+			"Metrics", 
+			f"encode_e2g_predictions_threshold{encode_e2g.get_threshold(cluster)}_stats.tsv"
+			) for cluster in CLUSTER],
+		plots = os.path.join(config["results_dir"], "qc_plots.pdf")
+

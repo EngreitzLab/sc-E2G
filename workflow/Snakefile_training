@@ -68,9 +68,9 @@ rule add_external_features:
 
 rule kendall_correlation:
 	input:
-		kendall_candidate_e2g_pairs = lambda wildcards: dataset_config.loc[wildcards.dataset, 'candidate_pairs'],
-		sc_atac_matix = lambda wildcards: dataset_config.loc[wildcards.dataset, 'ATAC_matrix'],
-		sc_rna_matix = lambda wildcards: dataset_config.loc[wildcards.dataset, 'RNA_matrix']
+		kendall_pairs_path = lambda wildcards: dataset_config.loc[wildcards.dataset, 'candidate_pairs'],
+		atac_matix = lambda wildcards: dataset_config.loc[wildcards.dataset, 'ATAC_matrix'],
+		rna_matix = lambda wildcards: dataset_config.loc[wildcards.dataset, 'RNA_matrix']
 	output:
 		kendall_predictions = os.path.join(RESULTS_DIR, "{dataset}", "EnhancerPredictionsAllPutative_Kendall.tsv.gz") 
 	conda:

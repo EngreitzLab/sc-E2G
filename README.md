@@ -2,12 +2,12 @@
 Pipeline for running single cell ENCODE E2G.
 
 Input: Multiome dataset (ATAC and RNA)
-Output: Enhancer -> Gene Predictions
+Output: Enhancer -> Gene Predictions (for each cell cluster)
 
 The pipeline consists of the following components:
-1. Compute ABC model predictions
+1. Compute ABC model predictions for each cell cluster
 2. Generate E2G features from ABC predictions
-3. Compute Kendall correlation and/or ARC-E2G score
+3. Compute Kendall correlation and/or ARC-E2G score for each cell cluster
 4. Combine 2 & 3 to construct a feature file to be used as input to predictive model
 5. (optional) Train predictive model using CRISPR-validated E-G pairs from K562 dataset
 6. Apply trained model to make predictions by assigning a score to each E-G pair
@@ -24,13 +24,24 @@ For speed, it's recommended that your current environment has mamba installed
 
 ```
 conda config --set channel_priority flexible  # Make sure your conda config uses flexible channel packaging to prevent unsatisfiable errors
-conda create -n mamba -c conda-forge mamba
+conda create -n mamba -c conda-forge mamba python=3.11
 conda activate mamba
-mamba install -c conda-forge -c bioconda snakemake
+mamba install -c conda-forge -c bioconda snakemake=7
 ```
 
 ## Apply model
-Modify `config/config_biosamples.tsv` with your multiome data, including RNA_matrix, ATAC_matrix, and candidate_pairs files. 
+Before running this workflow, users should perform clustering to define cell clusters through regular single-cell analysis (such as Seurat & Signac).
+Required input data includes (refer to the example data in the `example_chr22_multiome` folder):
+1. Combined meta_data, including columns for cell_name, sample, cluster, and barcode.
+2. Combined RNA matrix, normalized by the total UMI count of each cell. It can be with or without log transformation.
+3. Indexed fragment files for each sample.
+
+To configure the pipeline:
+- Modify `config/config.yaml` to specify paths for meta_data, rna_matrix, and results_dir.
+- Modify `config/config_multiome_samples.tsv` to specify the fragment file path for each sample.
+- Modify `config/config_cell_clusters.tsv` to specify the Hi-C file path, Hi-C data type, Hi-C resolution, TSS coordinates, and gene coordinates for each cell cluster.
+
+
 
 Running the pipeline:
 ```

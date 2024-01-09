@@ -23,8 +23,9 @@ dependencies:
   - r-tidyverse
   - r-ggpubr
   - r-ggcorrplot
+  - r-foreach
+  - r-Signac
   - seaborn
   - matplotlib
   - bioconductor-genomicranges
   - bioconductor-genomation
-  - r-foreach
