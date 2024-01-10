@@ -2,8 +2,8 @@
 ### INPUT
 multiome_samples: "config/config_multiome_samples.tsv"
 cell_clusters: "config/config_cell_clusters.tsv"
-meta_data: "example_chr22_multiome/meta_data.csv"
-rna_matrix: "example_chr22_multiome/rna_matrix.csv.gz"
+meta_data: "resources/example_chr22_multiome/meta_data.csv"
+rna_matrix: "resources/example_chr22_multiome/rna_matrix.csv.gz"
 
 ### OUTPUT
 results_dir: "results/"
