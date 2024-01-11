@@ -24,7 +24,7 @@ For speed, it's recommended that your current environment has mamba installed
 
 ```
 conda config --set channel_priority flexible  # Make sure your conda config uses flexible channel packaging to prevent unsatisfiable errors
-conda create -n mamba -c conda-forge mamba python<=3.11
+conda create -n mamba -c conda-forge mamba python=3.11
 conda activate mamba
 mamba install -c conda-forge -c bioconda snakemake=7
 ```
