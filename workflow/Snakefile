@@ -27,20 +27,16 @@ RESULTS_DIR = config["results_dir"] # used in ENCODE_rE2G/ABC/workflow/rules/mac
 
 ## Convert cell cluster config to a biosample config for the ABC pipeline
 ## Treat each cell cluster as a distinct biosample
-make_biosample_config(
-	config["cell_clusters"],
-	os.path.join(
-		config["results_dir"], 
-		"tmp", 
-		"config_abc_biosamples.tsv"
-	),
-	config["results_dir"]
-)
 config["ABC_BIOSAMPLES"] = os.path.join(
 	config["results_dir"], 
 	"tmp", 
 	"config_abc_biosamples.tsv"
 	)
+make_biosample_config(
+	config["cell_clusters"],
+	config["ABC_BIOSAMPLES"],
+	config["results_dir"]
+)
 
 
 ## Import ENCODE_rE2G pipeline as a reusable module 
