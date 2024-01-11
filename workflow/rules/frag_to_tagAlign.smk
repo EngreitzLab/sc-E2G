@@ -19,13 +19,7 @@ rule frag_to_tagAlign:
 				"tagAlign.sort.gz"
 			)
 	conda:
-		os.path.join(
-			config["encode_re2g_dir"],
-			encode_e2g.config["ABC_DIR_PATH"],
-			"workflow",
-			"envs",
-			"abcenv.yml"
-		)
+		"../envs/sc_e2g.yml"
 	shell:
 		"""
 		# Make, sort and compress tagAlign file from fragment file

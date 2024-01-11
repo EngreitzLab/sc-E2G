@@ -1,3 +1,7 @@
 results/
 .vscode/
 .snakemake/
+dag.dot
+dag.png
+rulegraph.dot
+rulegraph.png
