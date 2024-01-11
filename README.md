@@ -34,7 +34,7 @@ Before running this workflow, users should perform clustering to define cell clu
 Required input data includes (refer to the example data in the `example_chr22_multiome` folder):
 1. Combined meta_data, including columns for cell_name, sample, cluster, and barcode.
 2. Combined RNA matrix, normalized by the total UMI count of each cell. It can be with or without log transformation.
-3. Indexed fragment files for each sample.
+3. Fragment files and their corresponding *.tbi index files for each sample.
 
 To configure the pipeline:
 - Modify `config/config.yaml` to specify paths for meta_data, rna_matrix, and results_dir.
