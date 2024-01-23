@@ -3,21 +3,21 @@ rule arc_e2g:
 	input:
 		abc_predictions = 
 			os.path.join(
-				config["results_dir"], 
+				RESULTS_DIR, 
 				"{cluster}", 
 				"Predictions", 
 				"EnhancerPredictionsAllPutative.tsv.gz"
 			),
 		kendall_predictions = 
 			os.path.join(
-				config["results_dir"], 
+				RESULTS_DIR, 
 				"{cluster}", 
 				"Kendall", 
 				"Paires.Kendall.tsv.gz")
 	output:
 		arc_predictions = 
 			os.path.join(
-				config["results_dir"], 
+				RESULTS_DIR, 
 				"{cluster}", 
 				"ARC",
 				"EnhancerPredictionsAllPutative_ARC.tsv.gz")

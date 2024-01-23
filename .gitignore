@@ -1,7 +1,5 @@
 results/
-.vscode/
+results_training/
 .snakemake/
-dag.dot
-dag.png
-rulegraph.dot
-rulegraph.png
+*.dot
+*.png

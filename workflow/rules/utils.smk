@@ -35,7 +35,7 @@ def make_biosample_config(cluster_config, biosample_config, results_dir):
 	df['biosample'] = df['cluster']
 	df['DHS'] = ''
 	df['ATAC'] = df['cluster'].apply(
-		lambda cluster: os.path.join(results_dir, cluster, "Fragments", "tagAlign.sort.gz")
+		lambda cluster: os.path.join(results_dir, cluster, "tagAlign", "tagAlign.sort.gz")
 	)
 	df['H3K27ac'] = ''
 	df['default_accessibility_feature'] = 'ATAC'
@@ -69,6 +69,5 @@ def get_e2g_config(config, encode_re2g_dir):
 	e2g_config["results_dir"] = config["results_dir"]
 	e2g_config["model_dir"] = config["model_dir"]
 	return e2g_config
-
 
 

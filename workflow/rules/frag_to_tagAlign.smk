@@ -2,20 +2,15 @@
 rule frag_to_tagAlign:
 	input:
 		frag_file = 
-			os.path.join(
-				config["results_dir"], 
-				"{cluster}", 
-				"Fragments", 
-				"atac_fragments.tsv.gz"
-			)
+			lambda wildcards: cell_cluster_config.loc[wildcards.cluster, "atac_frag_file"]
 	params:
 		chrom_sizes = encode_e2g.ABC.config['ref']['chrom_sizes']
 	output:
 		tagAlign_sort_file = 
 			os.path.join(
-				config["results_dir"], 
+				RESULTS_DIR, 
 				"{cluster}", 
-				"Fragments",
+				"tagAlign",
 				"tagAlign.sort.gz"
 			)
 	conda:

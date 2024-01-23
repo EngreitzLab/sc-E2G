@@ -1,12 +1,11 @@
 
 ### INPUT
+cell_clusters: "config/config_cell_clusters.tsv"
 model_config: "config/config_models.tsv"
-dataset_config: "config/config_datasets.tsv"
-run_feature_analysis: True
 
 ### OUTPUT
-results_dir: "results_chr22_test/"
+results_dir: "results_training/"
 
 ### PARAMS
-E2G_DIR_PATH: "ENCODE_rE2G"
-
+encode_re2g_dir: "ENCODE_rE2G"
+run_feature_analysis: True
