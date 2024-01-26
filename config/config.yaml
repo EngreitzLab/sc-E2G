@@ -1,11 +1,11 @@
 
 ### INPUT
-ABC_BIOSAMPLES: "config/config_datasets.tsv"
+cell_clusters: "config/config_cell_clusters.tsv"
 
 ### OUTPUT
-results_dir: "results_test_apply/"
+results_dir: "results/"
 
 ### PARAMS
-E2G_DIR_PATH: "ENCODE_rE2G"
+encode_re2g_dir: "ENCODE_rE2G"
 model_dir: "models/"
 

@@ -1,10 +1,12 @@
 ## Compute Kendall correlation
+# Note: Plan to replace this script with an Rcpp version in the future for improved performance
 
-# required packages
+# Load required packages
 suppressPackageStartupMessages({
   library(GenomicRanges)
   library(genomation)
   library(foreach)
+  library(Signac)
 })
 
 ## Define functions --------------------------------------------------------------------------------
@@ -55,46 +57,74 @@ MyFastKendall.E2G <- function(bed.E2G,
                               colname.enhancer_name = "peak_name",
                               colname.output = "Kendall") {
 
-  data.ATAC = t(data.ATAC)
+  bed.E2G.filter = 
+    bed.E2G[mcols(bed.E2G)[,colname.gene_name] %in% rownames(data.RNA) &
+              mcols(bed.E2G)[,colname.enhancer_name] %in% rownames(data.ATAC)] 
   
-  bed.E2G <- foreach(gene.name = unique(mcols(bed.E2G)[,colname.gene_name]),
+  data.ATAC = t(BinarizeCounts(data.ATAC))
+  
+  bed.E2G.output <- foreach(gene.name = unique(mcols(bed.E2G.filter)[,colname.gene_name]),
                      .combine = 'c') %do% {
                        
-                       bed.E2G.tmp <- bed.E2G[mcols(bed.E2G)[,colname.gene_name] == gene.name]
+                       bed.E2G.tmp <- bed.E2G.filter[mcols(bed.E2G.filter)[,colname.gene_name] == gene.name]
                        mcols(bed.E2G.tmp)[, colname.output] = MyFastKendall(as.numeric(data.RNA[gene.name, ]),
                                                                             data.ATAC[, mcols(bed.E2G.tmp)[,colname.enhancer_name], drop = F])
                        bed.E2G.tmp
                      }
-  return(bed.E2G)
+  return(bed.E2G.output)
 }
 
+# Import parameters from Snakemake
+kendall_pairs_path = snakemake@input$kendall_pairs_path
+atac_matix_path = snakemake@input$atac_matix
+rna_matix_path = snakemake@input$rna_matix
+kendall_predictions_path = snakemake@output$kendall_predictions
 
-
-# load candidate E-G pairs
-pairs.E2G = readGeneric(snakemake@input$kendall_candidate_e2g_pairs,
+# Load candidate E-G pairs
+pairs.E2G = readGeneric(kendall_pairs_path,
                         keep.all.metadata = T,
                         header = T)
-# load scRNA matrix
-matrix.rna = read.csv(snakemake@input$sc_rna_matix,
-                      row.names = 1,
-                      check.names = F)
 
-# load scATAC matrix
-matrix.atac = read.csv(snakemake@input$sc_atac_matix,
+
+# Load scATAC matrix
+matrix.atac = read.csv(atac_matix_path,
                        row.names = 1,
                        check.names = F)
-# compute Kendall correlation
+
+# Load scRNA matrix
+matrix.rna = read.csv(rna_matix_path,
+                      row.names = 1,
+                      check.names = F)
+matrix.rna = matrix.rna[,colnames(matrix.atac)]
+
+# Compute Kendall correlation
 pairs.E2G = MyFastKendall.E2G(pairs.E2G,
                               matrix.rna,
                               matrix.atac,
-                              colname.gene_name = "gene_name",
-                              colname.enhancer_name = "peak_name",
+                              colname.gene_name = "TargetGene",
+                              colname.enhancer_name = "PeakName",
                               colname.output = "Kendall")
 
-# write output to file
-write.table(as.data.frame(pairs.E2G),
-          file = gzfile(snakemake@output$kendall_predictions),
-	  row.names = F,
-	  quote = F,
-	  sep = "\t")
+# Write output to file
+df.pairs.E2G = 
+  as.data.frame(pairs.E2G)[,c("seqnames",
+                              "start",
+                              "end",
+                              "TargetGene",
+                              "PeakName",
+                              "PairName",
+                              "Kendall")]
+colnames(df.pairs.E2G) = 
+  c("chr",
+    "start",
+    "end",
+    "TargetGene",
+    "PeakName",
+    "PairName",
+    "Kendall")
+write.table(df.pairs.E2G,
+            file = gzfile(kendall_predictions_path),
+            row.names = F,
+            quote = F,
+            sep = "\t")
 

@@ -1,3 +1,5 @@
 results/
-.vscode/
+results_training/
 .snakemake/
+*.dot
+*.png

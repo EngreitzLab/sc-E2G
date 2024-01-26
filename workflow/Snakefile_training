@@ -9,83 +9,148 @@ import yaml
 configfile: "config/config_training.yaml"
 conda: "mamba"
 
-model_config = pd.read_table(config["model_config"], na_values="").fillna("None").set_index("model", drop=False)
-dataset_config = pd.read_table(config["dataset_config"], na_values="").set_index("biosample", drop=False)
 
-def make_paths_absolute(obj, base_path):
-	"""
-	Use absolute paths to be compatible with github submodules
-	Recursively go through the dictionary and convert relative paths to absolute paths.
-	"""
-	if isinstance(obj, dict):
-		for key, value in obj.items():
-			obj[key] = make_paths_absolute(value, base_path)
-	elif isinstance(obj, str):
-		# We assume all strings are paths. If converting the string
-		# to an absolute path results in a valid file, then the str was a path
-		new_file = os.path.join(base_path, obj)
-		if os.path.exists(new_file):
-			return new_file
-	return obj
+include: os.path.join("rules", "utils.smk")
+include: os.path.join("rules", "utils_training.smk")
 
-config = make_paths_absolute(config, os.getcwd())
+
+## Update paths in the config to be compatible with github submodules
 # Need to manually make results_dir an absolute path since above may
 # not work if results_dir folder isn't created
 # If results_dir is already an absolute path, this is a no-op
+config = make_paths_absolute(config, os.getcwd())
 config["results_dir"] = os.path.join(os.getcwd(), config["results_dir"])
-RESULTS_DIR = config["results_dir"]
-E2G_DIR_PATH = config["E2G_DIR_PATH"]
 
-def get_e2g_config(config):
-	e2g_config_file = os.path.join(E2G_DIR_PATH, "config/config_training.yaml")
-	with open(e2g_config_file, 'r') as stream:
-		e2g_config = yaml.safe_load(stream)
-	e2g_config["E2G_DIR_PATH"] = E2G_DIR_PATH
-	e2g_config["dataset_config"] = config["dataset_config"]
-	e2g_config["model_config"] = config["model_config"]
-	e2g_config["results_dir"] = config["results_dir"]
-	e2g_config["run_feature_analysis"] = config["run_feature_analysis"]
-	return e2g_config
 
+## Define global variables
+RESULTS_DIR = config["results_dir"] 
+
+
+## Convert cell cluster config to a biosample config for the ABC pipeline
+## Treat each cell cluster as a distinct biosample
+config["ABC_BIOSAMPLES"] = os.path.join(
+	RESULTS_DIR, 
+	"tmp", 
+	"config_abc_biosamples.tsv"
+	)
+make_biosample_config(
+	config["cell_clusters"],
+	config["ABC_BIOSAMPLES"],
+	RESULTS_DIR
+)
+
+
+## Import ENCODE_rE2G pipeline as a reusable module 
 module encode_e2g:
 	snakefile:
-		f"{E2G_DIR_PATH}/workflow/Snakefile_training"
-	config: get_e2g_config(config)
+		os.path.join(config["encode_re2g_dir"], "workflow", "Snakefile_training")
+	config: get_e2g_training_config(config, config["encode_re2g_dir"])
 
-use rule * from encode_e2g exclude add_external_features
 
-rule add_external_features:
-	input:
-		predictions_extended = os.path.join(RESULTS_DIR, "{dataset}", "{model}", "ActivityOnly_features.tsv.gz"),
-		arc_predictions = os.path.join(RESULTS_DIR, "{dataset}", "EnhancerPredictionsAllPutative_ARC.tsv.gz"),
-		feature_table_file = lambda wildcards: model_config.loc[wildcards.model, "feature_table"]
-	output:
-		plus_external_features = os.path.join(RESULTS_DIR, "{dataset}", "{model}", "ActivityOnly_plus_external_features.tsv.gz")
-	conda:
-		"envs/sc_e2g.yml"
-	script:
-		"scripts/integrate_kendall.R"
+## Include Snakemake rules from ENCODE_rE2G
+use rule * from encode_e2g exclude add_external_features, all
 
-rule kendall_correlation:
-	input:
-		kendall_candidate_e2g_pairs = lambda wildcards: dataset_config.loc[wildcards.dataset, 'candidate_pairs'],
-		sc_atac_matix = lambda wildcards: dataset_config.loc[wildcards.dataset, 'ATAC_matrix'],
-		sc_rna_matix = lambda wildcards: dataset_config.loc[wildcards.dataset, 'RNA_matrix']
-	output:
-		kendall_predictions = os.path.join(RESULTS_DIR, "{dataset}", "EnhancerPredictionsAllPutative_Kendall.tsv.gz") 
-	conda:
-		"envs/sc_e2g.yml"
-	script:
-		"scripts/compute_kendall.R"
 
-rule arc_e2g:
-	input:
-		abc_predictions = os.path.join(RESULTS_DIR, "{dataset}", "Predictions", "EnhancerPredictionsAllPutative.tsv.gz"),
-		kendall_predictions = os.path.join(RESULTS_DIR, "{dataset}", "EnhancerPredictionsAllPutative_Kendall.tsv.gz")
-	output:
-		arc_predictions = os.path.join(RESULTS_DIR, "{dataset}", "EnhancerPredictionsAllPutative_ARC.tsv.gz")
-	conda:
-		"envs/sc_e2g.yml"
-	script:
-		"scripts/compute_arc_e2g.R"
+## Include additional Snakemake rules
+include: os.path.join("rules", "frag_to_tagAlign.smk")
+include: os.path.join("rules", "make_kendall_pairs.smk")
+include: os.path.join("rules", "generate_atac_matrix.smk")
+include: os.path.join("rules", "compute_kendall.smk")
+include: os.path.join("rules", "arc_e2g.smk")
+include: os.path.join("rules", "add_external_features_training.smk")
+
+
+## Import cell_cluster config table
+cell_cluster_config = pd.read_table(config["cell_clusters"]).set_index("cluster", drop=False)
+
+
+## Import model config table
+# Treat each cell cluster as a distinct dataset
+model_config = pd.read_table(config["model_config"], na_values="").fillna("None").set_index("model", drop=False)
+
+
+## Define the final outputs of the pipeline
+
+# Files for feature analysis
+forward_feature_selection_auprc_files = list()
+backward_feature_selection_auprc_files = list()
+permutation_feature_importance_auprc_files = list()
+
+if config["run_feature_analysis"]:
+	forward_feature_selection_auprc_files = expand(
+		os.path.join(
+			RESULTS_DIR,
+			"{dataset}",
+			"{model}",
+			"feature_analysis",
+			"forward_feature_selection_auprc.pdf"
+		),
+		zip,
+		dataset = model_config["dataset"],
+		model = model_config["model"]
+	)
+	backward_feature_selection_auprc_files = expand(
+		os.path.join(
+			RESULTS_DIR,
+			"{dataset}",
+			"{model}",
+			"feature_analysis",
+			"backward_feature_selection_auprc.pdf"
+		),
+		zip,
+		dataset = model_config["dataset"],
+		model = model_config["model"]
+	)
+	permutation_feature_importance_auprc_files = expand(
+		os.path.join(
+			RESULTS_DIR,
+			"{dataset}",
+			"{model}",
+			"feature_analysis",
+			"permutation_feature_importance_auprc.pdf"
+		),
+		zip,
+		dataset = model_config["dataset"],
+		model = model_config["model"]
+	)
+
+# Only test all feature sets if polynomial == False and n_features < 14
+all_feature_set_files = list()
+for row in model_config.itertuples(index = False):
+	if not row.polynomial:
+		features = pd.read_table(row.feature_table)
+		n_features = len(features)
+		if n_features < 14:
+			all_feature_set_files.append(
+				os.path.join(
+					RESULTS_DIR, 
+					row.dataset, 
+					row.model, 
+					"feature_analysis", 
+					"all_feature_sets.tsv"
+				)
+			)
+
+rule all:
+	input: 
+		models = expand(
+			os.path.join(
+				RESULTS_DIR,
+				"{dataset}",
+				"{model}", 
+				"model", 
+				"model_full.pkl"
+			),
+			zip,
+			dataset = model_config["dataset"],
+			model = model_config["model"]
+		),
+		forward_feature_selection_auprc = 
+			forward_feature_selection_auprc_files,
+		backward_feature_selection_auprc =
+			backward_feature_selection_auprc_files,
+		permutation_feature_importance_auprc =
+			permutation_feature_importance_auprc_files,
+		all_feature_sets =
+			all_feature_set_files
 
