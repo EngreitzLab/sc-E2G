@@ -3,27 +3,23 @@ rule generate_atac_matrix:
 	input:
 		kendall_pairs_path = 
 			os.path.join(
-				config["results_dir"], 
+				RESULTS_DIR, 
 				"{cluster}", 
 				"Kendall", 
 				"Paires.tsv.gz"
 			),
-		multiome_sample_path = config["multiome_samples"],
-		meta_data_path = config["meta_data"]
+		atac_frag_path = 
+			lambda wildcards: cell_cluster_config.loc[wildcards.cluster, "atac_frag_file"],
+		rna_matrix_path = 
+			lambda wildcards: cell_cluster_config.loc[wildcards.cluster, "rna_matrix_file"]
 	output:
-		atac_matrix = 
+		atac_matrix_path = 
 			os.path.join(
-				config["results_dir"], 
+				RESULTS_DIR, 
 				"{cluster}", 
 				"Kendall", 
 				"atac_matrix.csv.gz"
 			)
-	params:
-		meta_col_cell_name = config["meta_data_col"]["cell_name"],
-		meta_col_sample = config["meta_data_col"]["sample"],
-		meta_col_cluster = config["meta_data_col"]["cluster"],
-		meta_col_barcode = config["meta_data_col"]["barcode"]
-
 	conda:
 		"../envs/sc_e2g.yml"
 	script:

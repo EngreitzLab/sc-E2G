@@ -3,20 +3,20 @@
 rule make_kendall_pairs:
 	input:
 		narrowPeak = os.path.join(
-			config["results_dir"], 
+			RESULTS_DIR, 
 			"{cluster}", 
 			"Peaks", 
 			"macs2_peaks.narrowPeak.sorted"
 		),
 		allPutative = os.path.join(
-			config["results_dir"], 
+			RESULTS_DIR, 
 			"{cluster}", 
 			"Predictions", 
 			"EnhancerPredictionsAllPutative.tsv.gz"
 		)
 	output:
 		kendallPairs = os.path.join(
-			config["results_dir"], 
+			RESULTS_DIR, 
 			"{cluster}", 
 			"Kendall", 
 			"Paires.tsv.gz"

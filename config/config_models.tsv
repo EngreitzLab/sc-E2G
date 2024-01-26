@@ -1,2 +1,3 @@
 model	dataset	ABC_directory	feature_table	polynomial
-ATAC_test	K562_ATAC_chr22		resources/feature_tables/multiome_features.tsv	False
+ATAC_test_cluster1	cluster1		resources/feature_tables/multiome_features.tsv	False
+ATAC_test_cluster2	cluster2		resources/feature_tables/multiome_features.tsv	False

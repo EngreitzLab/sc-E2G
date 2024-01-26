@@ -22,20 +22,20 @@ config["results_dir"] = os.path.join(os.getcwd(), config["results_dir"])
 
 
 ## Define global variables
-RESULTS_DIR = config["results_dir"] # used in ENCODE_rE2G/ABC/workflow/rules/macs2.smk 
+RESULTS_DIR = config["results_dir"] 
 
 
 ## Convert cell cluster config to a biosample config for the ABC pipeline
 ## Treat each cell cluster as a distinct biosample
 config["ABC_BIOSAMPLES"] = os.path.join(
-	config["results_dir"], 
+	RESULTS_DIR, 
 	"tmp", 
 	"config_abc_biosamples.tsv"
 	)
 make_biosample_config(
 	config["cell_clusters"],
 	config["ABC_BIOSAMPLES"],
-	config["results_dir"]
+	RESULTS_DIR
 )
 
 
@@ -51,7 +51,6 @@ use rule * from encode_e2g exclude add_external_features, all
 
 
 ## Include additional Snakemake rules
-include: os.path.join("rules", "generate_frag_file.smk")
 include: os.path.join("rules", "frag_to_tagAlign.smk")
 include: os.path.join("rules", "make_kendall_pairs.smk")
 include: os.path.join("rules", "generate_atac_matrix.smk")
@@ -60,9 +59,8 @@ include: os.path.join("rules", "arc_e2g.smk")
 include: os.path.join("rules", "add_external_features.smk")
 
 
-## Import cell cluster configuration table and make a list of cell clusters
-CELL_CLUSTER_DF = pd.read_table(config["cell_clusters"]).set_index("cluster", drop=False)
-CLUSTER = CELL_CLUSTER_DF["cluster"].to_list()
+## Import cell cluster config table
+cell_cluster_config = pd.read_table(config["cell_clusters"]).set_index("cluster", drop=False)
 
 
 ## Define the final outputs of the pipeline
@@ -70,19 +68,19 @@ rule all:
 	input: 
 		encode_e2g_predictions = expand(
 			os.path.join(
-				config["results_dir"], 
+				RESULTS_DIR, 
 				"{cluster}", 
 				"Predictions", 
 				"encode_e2g_predictions.tsv.gz"
 			), 
-			cluster=CLUSTER
+			cluster = cell_cluster_config["cluster"]
 		),
 		prediction_stats = [os.path.join
 			(
-			config["results_dir"], 
+			RESULTS_DIR, 
 			f"{cluster}", 
 			"Metrics", 
 			f"encode_e2g_predictions_threshold{encode_e2g.get_threshold(cluster)}_stats.tsv"
-			) for cluster in CLUSTER],
-		plots = os.path.join(config["results_dir"], "qc_plots.pdf")
+			) for cluster in cell_cluster_config["cluster"]],
+		plots = os.path.join(RESULTS_DIR, "qc_plots.pdf")
 
