@@ -7,7 +7,6 @@ channels:
   - r
 dependencies:
   - bedtools=2.29.2
-  - tabix
   - click
   - csvtk
   - numpy
@@ -26,6 +25,7 @@ dependencies:
   - r-ggcorrplot
   - r-foreach
   - r-Signac
+  - r-Rcpp
   - seaborn
   - matplotlib
   - bioconductor-genomicranges
