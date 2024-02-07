@@ -1,10 +1,8 @@
-## Create link from fragment file to tagAlign file
+## Convert fragment file to tagAlign file
 rule frag_to_tagAlign:
 	input:
 		frag_file = 
-			lambda wildcards: cell_cluster_config.loc[wildcards.cluster, "atac_frag_file"],
-		frag_file_index = 
-			lambda wildcards: cell_cluster_config.loc[wildcards.cluster, "atac_frag_file"] + ".tbi"
+			lambda wildcards: cell_cluster_config.loc[wildcards.cluster, "atac_frag_file"]
 	output:
 		tagAlign_sort_file = 
 			os.path.join(
@@ -12,17 +10,18 @@ rule frag_to_tagAlign:
 				"{cluster}", 
 				"tagAlign",
 				"tagAlign.sort.gz"
-			),
-		tagAlign_sort_file_index = 
-			os.path.join(
-				RESULTS_DIR, 
-				"{cluster}", 
-				"tagAlign", 
-				"tagAlign.sort.gz.tbi"
 			)
+	conda:
+		"../envs/sc_e2g.yml"
+	threads: 5
 	shell:
 		"""
-		ln {input.frag_file} {output.tagAlign_sort_file}
-		ln {input.frag_file_index} {output.tagAlign_sort_file_index}
-		""" 
+		# Make, sort and compress tagAlign file from fragment file
+		LC_ALL=C zcat {input.frag_file}  | sed '/^#/d' | \
+		awk -v OFS='\t' '{{mid=int(($2+$3)/2); print $1,$2,mid,"N",1000,"+"; print $1,mid+1,$3,"N",1000,"-"}}' | \
+		sort -k 1,1V -k 2,2n -k3,3n --parallel 5 | \
+		bgzip -c > {output.tagAlign_sort_file}  
 
+		# Index the tagAlign file
+		tabix -p bed {output.tagAlign_sort_file}
+		""" 
