@@ -27,8 +27,8 @@ rna_matrix = read.csv(rna_matrix_path,
 
 # Create a list to store Signac Fragment object
 list.fragments = list()
-cells.use = colnames(rna_matrix_path)
-names(cells.use) = colnames(rna_matrix_path)
+cells.use = colnames(rna_matrix)
+names(cells.use) = colnames(rna_matrix)
 list.fragments[[1]] =
   CreateFragmentObject(path = atac_frag_path,
                        cells = cells.use)
