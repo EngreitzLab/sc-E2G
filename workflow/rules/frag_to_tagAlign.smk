@@ -3,8 +3,6 @@ rule frag_to_tagAlign:
 	input:
 		frag_file = 
 			lambda wildcards: cell_cluster_config.loc[wildcards.cluster, "atac_frag_file"]
-	params:
-		chrom_sizes = encode_e2g.ABC.config['ref']['chrom_sizes']
 	output:
 		tagAlign_sort_file = 
 			os.path.join(
@@ -27,4 +25,3 @@ rule frag_to_tagAlign:
 		# Index the tagAlign file
 		tabix -p bed {output.tagAlign_sort_file}
 		""" 
-

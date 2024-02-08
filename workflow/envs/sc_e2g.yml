@@ -26,6 +26,7 @@ dependencies:
   - r-ggcorrplot
   - r-foreach
   - r-Signac
+  - r-Rcpp
   - seaborn
   - matplotlib
   - bioconductor-genomicranges

@@ -1,5 +1,4 @@
 ## Compute Kendall correlation
-# Note: Plan to replace this script with an Rcpp version in the future for improved performance
 
 # Load required packages
 suppressPackageStartupMessages({
@@ -7,36 +6,58 @@ suppressPackageStartupMessages({
   library(genomation)
   library(foreach)
   library(Signac)
+  library(Rcpp)
 })
 
 ## Define functions --------------------------------------------------------------------------------
-MyCountDiff = function(y.matrix.sorted){
-  n = nrow(y.matrix.sorted)
-  cumsum.matrix = apply(y.matrix.sorted, 2, cumsum)
-  
-  concordant.matrix = cumsum.matrix * (1 - y.matrix.sorted)
-  disconcordant.matrix = (1:n - cumsum.matrix) * y.matrix.sorted 
-  
-  colSums(concordant.matrix - disconcordant.matrix)
+
+# Calculate the difference between concordant and disconcordant pairs from a sorted logical matrix
+cppFunction('
+NumericVector count_diff(LogicalMatrix y_matrix_sorted) {
+    int n = y_matrix_sorted.nrow();
+    int m = y_matrix_sorted.ncol();
+    NumericVector result(m);
+    for (int j = 0; j < m; j++) {
+        long long concordant = 0;
+        long long disconcordant = 0;
+        long long cumsum = 0;
+        for (int i = 0; i < n; i++) {
+            bool tmp = y_matrix_sorted(i, j);
+            cumsum += tmp;
+            if (tmp) {
+                disconcordant += (i + 1 - cumsum);
+            } else {
+                concordant += cumsum;
+            }
+        }
+        result[j] = static_cast<double>(concordant - disconcordant);
+    }
+    return result;
 }
+')
 
-
-MyFastKendall = function(x, y.matrix){
+# Compute Kendall correlation between a single gene and multiple enhancers
+kendall_one_gene = function(x, y.matrix){
+  
+  # Sort x in decreasing order and accordingly sort y.matrix
   ord = order(x, 
               decreasing = T)
   x.sorted = x[ord]
   y.matrix.sorted = 
     y.matrix[ord, ,drop = F]
   
-  n.diff = MyCountDiff(y.matrix.sorted)
+  # Calculate initial differences between concordant and disconcordant pairs
+  n.diff = count_diff(y.matrix.sorted)
   
+  # Adjust differences for ties in x
   x.ties = unique(x.sorted[duplicated(x.sorted)])
   for (x.tie in x.ties) {
     n.diff = 
       n.diff - 
-      MyCountDiff(y.matrix.sorted[x.sorted == x.tie, ,drop = F])
+      count_diff(y.matrix.sorted[x.sorted == x.tie, ,drop = F])
   }
   
+  # Calculate Kendall's tau-b coefficient
   l = length(x)
   s = colSums(y.matrix)
   tx = table(x)
@@ -50,29 +71,37 @@ MyFastKendall = function(x, y.matrix){
   return(tau_b)
 }
 
-MyFastKendall.E2G <- function(bed.E2G,
-                              data.RNA,
-                              data.ATAC,
-                              colname.gene_name = "gene_name",
-                              colname.enhancer_name = "peak_name",
-                              colname.output = "Kendall") {
 
+# Compute Kendall correlation between a mutliple genes and multiple enhancers
+kendall_mutliple_genes = function(bed.E2G,
+                                  data.RNA,
+                                  data.ATAC,
+                                  colname.gene_name = "gene_name",
+                                  colname.enhancer_name = "peak_name",
+                                  colname.output = "Kendall") {
+  
+  # Filter E2G pairs based on presence in RNA and ATAC data
   bed.E2G.filter = 
     bed.E2G[mcols(bed.E2G)[,colname.gene_name] %in% rownames(data.RNA) &
               mcols(bed.E2G)[,colname.enhancer_name] %in% rownames(data.ATAC)] 
   
+  # Binarize ATAC data
   data.ATAC = t(BinarizeCounts(data.ATAC))
   
+  # Compute Kendall correlation for each gene
   bed.E2G.output <- foreach(gene.name = unique(mcols(bed.E2G.filter)[,colname.gene_name]),
-                     .combine = 'c') %do% {
-                       
-                       bed.E2G.tmp <- bed.E2G.filter[mcols(bed.E2G.filter)[,colname.gene_name] == gene.name]
-                       mcols(bed.E2G.tmp)[, colname.output] = MyFastKendall(as.numeric(data.RNA[gene.name, ]),
-                                                                            data.ATAC[, mcols(bed.E2G.tmp)[,colname.enhancer_name], drop = F])
-                       bed.E2G.tmp
-                     }
+                            .combine = 'c') %do% {
+                              
+                              bed.E2G.tmp <- bed.E2G.filter[mcols(bed.E2G.filter)[,colname.gene_name] == gene.name]
+                              
+                              mcols(bed.E2G.tmp)[, colname.output] = 
+                                kendall_one_gene(as.numeric(data.RNA[gene.name, ]),
+                                                 data.ATAC[, mcols(bed.E2G.tmp)[,colname.enhancer_name], drop = F])
+                              bed.E2G.tmp
+                            }
   return(bed.E2G.output)
 }
+## -------------------------------------------------------------------------------------------------
 
 # Import parameters from Snakemake
 kendall_pairs_path = snakemake@input$kendall_pairs_path
@@ -84,7 +113,6 @@ kendall_predictions_path = snakemake@output$kendall_predictions
 pairs.E2G = readGeneric(kendall_pairs_path,
                         keep.all.metadata = T,
                         header = T)
-
 
 # Load scATAC matrix
 matrix.atac = read.csv(atac_matix_path,
@@ -98,12 +126,12 @@ matrix.rna = read.csv(rna_matix_path,
 matrix.rna = matrix.rna[,colnames(matrix.atac)]
 
 # Compute Kendall correlation
-pairs.E2G = MyFastKendall.E2G(pairs.E2G,
-                              matrix.rna,
-                              matrix.atac,
-                              colname.gene_name = "TargetGene",
-                              colname.enhancer_name = "PeakName",
-                              colname.output = "Kendall")
+pairs.E2G = kendall_mutliple_genes(pairs.E2G,
+                                   matrix.rna,
+                                   matrix.atac,
+                                   colname.gene_name = "TargetGene",
+                                   colname.enhancer_name = "PeakName",
+                                   colname.output = "Kendall")
 
 # Write output to file
 df.pairs.E2G = 
