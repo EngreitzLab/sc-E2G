@@ -84,7 +84,7 @@ pairs.E2G.ABC = AddMax(pairs.E2G.ABC,
 
 # Compute ARE-E2G
 pairs.E2G.ABC = IntergrateABC(pairs.E2G.ABC,
-                              "ABC.Score",
+                              snakemake@params$abc_score_col,
                               "Kendall",
                               "ARC.E2G.Score")
 

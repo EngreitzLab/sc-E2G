@@ -2,7 +2,7 @@
 rule frag_to_tagAlign:
 	input:
 		frag_file = 
-			lambda wildcards: cell_cluster_config.loc[wildcards.cluster, "atac_frag_file"]
+			lambda wildcards: CELL_CLUSTER_DF.loc[wildcards.cluster, "atac_frag_file"]
 	output:
 		tagAlign_sort_file = 
 			os.path.join(

@@ -19,7 +19,7 @@ rule make_kendall_pairs:
 			RESULTS_DIR, 
 			"{cluster}", 
 			"Kendall", 
-			"Paires.tsv.gz"
+			"Pairs.tsv.gz"
 		)
 
 	conda:

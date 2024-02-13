@@ -13,7 +13,9 @@ rule arc_e2g:
 				RESULTS_DIR, 
 				"{cluster}", 
 				"Kendall", 
-				"Paires.Kendall.tsv.gz")
+				"Pairs.Kendall.tsv.gz")
+	params:
+		abc_score_col = lambda wildcards: get_abc_score_col(wildcards.cluster)
 	output:
 		arc_predictions = 
 			os.path.join(

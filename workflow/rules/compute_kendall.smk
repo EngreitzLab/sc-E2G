@@ -16,14 +16,14 @@ rule compute_kendall:
 				"atac_matrix.csv.gz"
 			),
 		rna_matix = 
-			lambda wildcards: cell_cluster_config.loc[wildcards.cluster, "rna_matrix_file"]
+			lambda wildcards: CELL_CLUSTER_DF.loc[wildcards.cluster, "rna_matrix_file"]
 	output:
 		kendall_predictions = 
 			os.path.join(
 				RESULTS_DIR, 
 				"{cluster}", 
 				"Kendall", 
-				"Paires.Kendall.tsv.gz") 
+				"Pairs.Kendall.tsv.gz") 
 	conda:
 		"../envs/sc_e2g.yml"
 	script:

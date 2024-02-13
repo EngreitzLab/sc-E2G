@@ -6,12 +6,12 @@ rule generate_atac_matrix:
 				RESULTS_DIR, 
 				"{cluster}", 
 				"Kendall", 
-				"Paires.tsv.gz"
+				"Pairs.tsv.gz"
 			),
 		atac_frag_path = 
-			lambda wildcards: cell_cluster_config.loc[wildcards.cluster, "atac_frag_file"],
+			lambda wildcards: CELL_CLUSTER_DF.loc[wildcards.cluster, "atac_frag_file"],
 		rna_matrix_path = 
-			lambda wildcards: cell_cluster_config.loc[wildcards.cluster, "rna_matrix_file"]
+			lambda wildcards: CELL_CLUSTER_DF.loc[wildcards.cluster, "rna_matrix_file"]
 	output:
 		atac_matrix_path = 
 			os.path.join(
