@@ -7,6 +7,7 @@ suppressPackageStartupMessages({
   library(foreach)
   library(Signac)
   library(Rcpp)
+  library(data.table)
 })
 
 ## Define functions --------------------------------------------------------------------------------
@@ -150,9 +151,9 @@ colnames(df.pairs.E2G) =
     "PeakName",
     "PairName",
     "Kendall")
-write.table(df.pairs.E2G,
-            file = gzfile(kendall_predictions_path),
-            row.names = F,
-            quote = F,
-            sep = "\t")
+fwrite(df.pairs.E2G,
+       file = kendall_predictions_path,
+       row.names = F,
+       quote = F,
+       sep = "\t")
 

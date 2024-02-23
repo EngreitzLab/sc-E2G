@@ -5,6 +5,7 @@
 suppressPackageStartupMessages({
   library(genomation)
   library(GenomicRanges)
+  library(data.table)
 })
 
 # Import parameters from Snakemake
@@ -65,10 +66,10 @@ colnames(df.pairs.e2g) =
     "PairName")
 
 # Write the enhancer-gene pairs to a file
-write.table(df.pairs.e2g,
-            file = gzfile(kendallPairs_path),
-            row.names = F,
-            col.names = T,
-            sep = "\t",
-            quote = F)
+fwrite(df.pairs.e2g,
+       file = kendallPairs_path,
+       row.names = F,
+       col.names = T,
+       quote = F,
+       sep = "\t")
 
