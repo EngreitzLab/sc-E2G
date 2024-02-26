@@ -20,6 +20,8 @@ rule generate_atac_matrix:
 				"Kendall", 
 				"atac_matrix.csv.gz"
 			)
+	resources:
+		mem_mb=32*1000
 	conda:
 		"../envs/sc_e2g.yml"
 	script:

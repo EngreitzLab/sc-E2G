@@ -6,7 +6,7 @@ rule compute_kendall:
 				RESULTS_DIR, 
 				"{cluster}", 
 				"Kendall", 
-				"Paires.tsv.gz"
+				"Pairs.tsv.gz"
 			),
 		atac_matix = 
 			os.path.join(
@@ -24,6 +24,8 @@ rule compute_kendall:
 				"{cluster}", 
 				"Kendall", 
 				"Pairs.Kendall.tsv.gz") 
+	resources: 
+		mem_mb=64*1000
 	conda:
 		"../envs/sc_e2g.yml"
 	script:

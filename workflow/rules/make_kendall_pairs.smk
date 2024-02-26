@@ -21,7 +21,8 @@ rule make_kendall_pairs:
 			"Kendall", 
 			"Pairs.tsv.gz"
 		)
-
+	resources:
+		mem_mb=32*1000
 	conda:
 		"../envs/sc_e2g.yml"
 	script:
