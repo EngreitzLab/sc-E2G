@@ -70,4 +70,11 @@ def get_e2g_config(config, encode_re2g_dir):
 	e2g_config["model_dir"] = config["model_dir"]
 	return e2g_config
 
+# decide whether ARC-E2G should use "ABC.Score" or "powerlaw.Score"
+def get_abc_score_col(cluster):
+	row = CELL_CLUSTER_DF.loc[CELL_CLUSTER_DF["cluster"] == cluster].iloc[0]
+	if pd.isnull(row["HiC_type"]):
+		return "powerlaw.Score"
+	else:
+		return "ABC.Score"
 

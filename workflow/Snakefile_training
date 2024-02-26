@@ -21,10 +21,9 @@ include: os.path.join("rules", "utils_training.smk")
 config = make_paths_absolute(config, os.getcwd())
 config["results_dir"] = os.path.join(os.getcwd(), config["results_dir"])
 
-
 ## Define global variables
 RESULTS_DIR = config["results_dir"] 
-
+CELL_CLUSTER_DF = pd.read_table(config["cell_clusters"]).set_index("cluster", drop=False)
 
 ## Convert cell cluster config to a biosample config for the ABC pipeline
 ## Treat each cell cluster as a distinct biosample
@@ -59,17 +58,13 @@ include: os.path.join("rules", "compute_kendall.smk")
 include: os.path.join("rules", "arc_e2g.smk")
 include: os.path.join("rules", "add_external_features_training.smk")
 
-
-## Import cell_cluster config table
-cell_cluster_config = pd.read_table(config["cell_clusters"]).set_index("cluster", drop=False)
-
-
 ## Import model config table
-# Treat each cell cluster as a distinct dataset
 model_config = pd.read_table(config["model_config"], na_values="").fillna("None").set_index("model", drop=False)
 
-
-## Define the final outputs of the pipeline
+## Define final output files
+model_comparison_files = []
+model_comparison_files.append(os.path.join(RESULTS_DIR, "performance_across_models.tsv")) # comparison across models
+model_comparison_files.extend(expand(os.path.join(RESULTS_DIR, "performance_across_models_{metric}.pdf"), metric=["auprc", "precision"])) # plot of comparisons
 
 # Files for feature analysis
 forward_feature_selection_auprc_files = list()
@@ -131,6 +126,7 @@ for row in model_config.itertuples(index = False):
 				)
 			)
 
+# define final output files 
 rule all:
 	input: 
 		models = expand(
@@ -145,6 +141,7 @@ rule all:
 			dataset = model_config["dataset"],
 			model = model_config["model"]
 		),
+		model_comparison = model_comparison_files,
 		forward_feature_selection_auprc = 
 			forward_feature_selection_auprc_files,
 		backward_feature_selection_auprc =

@@ -13,7 +13,9 @@ rule arc_e2g:
 				RESULTS_DIR, 
 				"{cluster}", 
 				"Kendall", 
-				"Paires.Kendall.tsv.gz")
+				"Pairs.Kendall.tsv.gz")
+	params:
+	 	abc_score_col = lambda wildcards: get_abc_score_col(wildcards.cluster)
 	output:
 		arc_predictions = 
 			os.path.join(
@@ -21,6 +23,8 @@ rule arc_e2g:
 				"{cluster}", 
 				"ARC",
 				"EnhancerPredictionsAllPutative_ARC.tsv.gz")
+	resources: 
+		mem_mb=64*1000
 	conda:
 		"../envs/sc_e2g.yml"
 	script:

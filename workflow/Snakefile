@@ -12,7 +12,6 @@ conda: "mamba"
 
 include: os.path.join("rules", "utils.smk")
 
-
 ## Update paths in the config to be compatible with github submodules
 # Need to manually make results_dir an absolute path since above may
 # not work if results_dir folder isn't created
@@ -20,10 +19,9 @@ include: os.path.join("rules", "utils.smk")
 config = make_paths_absolute(config, os.getcwd())
 config["results_dir"] = os.path.join(os.getcwd(), config["results_dir"])
 
-
 ## Define global variables
 RESULTS_DIR = config["results_dir"] 
-
+CELL_CLUSTER_DF = pd.read_table(config["cell_clusters"]).set_index("cluster", drop=False)
 
 ## Convert cell cluster config to a biosample config for the ABC pipeline
 ## Treat each cell cluster as a distinct biosample
@@ -58,11 +56,6 @@ include: os.path.join("rules", "compute_kendall.smk")
 include: os.path.join("rules", "arc_e2g.smk")
 include: os.path.join("rules", "add_external_features.smk")
 
-
-## Import cell cluster config table
-cell_cluster_config = pd.read_table(config["cell_clusters"]).set_index("cluster", drop=False)
-
-
 ## Define the final outputs of the pipeline
 rule all:
 	input: 
@@ -73,7 +66,7 @@ rule all:
 				"Predictions", 
 				"encode_e2g_predictions.tsv.gz"
 			), 
-			cluster = cell_cluster_config["cluster"]
+			cluster = CELL_CLUSTER_DF["cluster"]
 		),
 		prediction_stats = [os.path.join
 			(
@@ -81,6 +74,6 @@ rule all:
 			f"{cluster}", 
 			"Metrics", 
 			f"encode_e2g_predictions_threshold{encode_e2g.get_threshold(cluster)}_stats.tsv"
-			) for cluster in cell_cluster_config["cluster"]],
+			) for cluster in CELL_CLUSTER_DF["cluster"]],
 		plots = os.path.join(RESULTS_DIR, "qc_plots.pdf")
 

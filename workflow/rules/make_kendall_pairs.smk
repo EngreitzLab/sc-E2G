@@ -19,9 +19,10 @@ rule make_kendall_pairs:
 			RESULTS_DIR, 
 			"{cluster}", 
 			"Kendall", 
-			"Paires.tsv.gz"
+			"Pairs.tsv.gz"
 		)
-
+	resources:
+		mem_mb=32*1000
 	conda:
 		"../envs/sc_e2g.yml"
 	script:

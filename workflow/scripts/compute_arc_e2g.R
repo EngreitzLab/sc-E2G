@@ -53,7 +53,7 @@ AddMax = function(bed.E2G.A,
 }
 
 # Integrate ABC and Kendall into ARC-E2G
-IntergrateABC = function(bed.E2G,
+IntegrateABC = function(bed.E2G,
                          colname.ABC,
                          colname.feature,
                          colname.output){
@@ -100,9 +100,10 @@ pairs.E2G.Kendall =
 pairs.E2G.ABC = AddMax(pairs.E2G.ABC,
                        pairs.E2G.Kendall)
 
-# Compute ARE-E2G
-pairs.E2G.ABC = IntergrateABC(pairs.E2G.ABC,
-                              "ABC.Score",
+# Compute ARC-E2G
+message(snakemake@params$abc_score_col)
+pairs.E2G.ABC = IntegrateABC(pairs.E2G.ABC,
+                              snakemake@params$abc_score_col,
                               "Kendall",
                               "ARC.E2G.Score")
 
@@ -114,4 +115,3 @@ fwrite(df.output,
        row.names = F,
        quote = F,
        sep = "\t")
-
