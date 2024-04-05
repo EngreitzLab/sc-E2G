@@ -6,6 +6,7 @@ suppressPackageStartupMessages({
   library(genomation)
   library(foreach)
   library(Signac)
+  library(Seurat)
   library(Rcpp)
   library(data.table)
 })
@@ -121,10 +122,13 @@ matrix.atac = read.csv(atac_matix_path,
                        check.names = F)
 
 # Load scRNA matrix
-matrix.rna = read.csv(rna_matix_path,
+matrix.rna_count = read.csv(rna_matix_path,
                       row.names = 1,
                       check.names = F)
-matrix.rna = matrix.rna[,colnames(matrix.atac)]
+matrix.rna_count = matrix.rna_count[,colnames(matrix.atac)]
+
+# Normalize scRNA matrix
+matrix.rna = NormalizeData(matrix.rna_count)
 
 # Compute Kendall correlation
 pairs.E2G = kendall_mutliple_genes(pairs.E2G,

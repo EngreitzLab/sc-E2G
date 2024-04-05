@@ -26,6 +26,7 @@ dependencies:
   - r-ggcorrplot
   - r-foreach
   - r-Signac
+  - r-Seurat
   - r-Rcpp
   - seaborn
   - matplotlib
