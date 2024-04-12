@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
   library(Seurat)
   library(Rcpp)
   library(data.table)
+  library(Matrix)
 })
 
 ## Define functions --------------------------------------------------------------------------------
@@ -49,14 +50,14 @@ kendall_one_gene = function(x, y.matrix){
     y.matrix[ord, ,drop = F]
   
   # Calculate initial differences between concordant and disconcordant pairs
-  n.diff = count_diff(y.matrix.sorted)
+  n.diff = count_diff(as.matrix(y.matrix.sorted))
   
   # Adjust differences for ties in x
   x.ties = unique(x.sorted[duplicated(x.sorted)])
   for (x.tie in x.ties) {
     n.diff = 
       n.diff - 
-      count_diff(y.matrix.sorted[x.sorted == x.tie, ,drop = F])
+      count_diff(as.matrix(y.matrix.sorted[x.sorted == x.tie, ,drop = F]))
   }
   
   # Calculate Kendall's tau-b coefficient
@@ -87,8 +88,7 @@ kendall_mutliple_genes = function(bed.E2G,
     bed.E2G[mcols(bed.E2G)[,colname.gene_name] %in% rownames(data.RNA) &
               mcols(bed.E2G)[,colname.enhancer_name] %in% rownames(data.ATAC)] 
   
-  # Binarize ATAC data
-  data.ATAC = t(BinarizeCounts(data.ATAC))
+
   
   # Compute Kendall correlation for each gene
   bed.E2G.output <- foreach(gene.name = unique(mcols(bed.E2G.filter)[,colname.gene_name]),
@@ -98,7 +98,7 @@ kendall_mutliple_genes = function(bed.E2G,
                               
                               mcols(bed.E2G.tmp)[, colname.output] = 
                                 kendall_one_gene(as.numeric(data.RNA[gene.name, ]),
-                                                 data.ATAC[, mcols(bed.E2G.tmp)[,colname.enhancer_name], drop = F])
+                                                 t(data.ATAC[mcols(bed.E2G.tmp)[,colname.enhancer_name], , drop = F]))
                               bed.E2G.tmp
                             }
   return(bed.E2G.output)
@@ -117,18 +117,23 @@ pairs.E2G = readGeneric(kendall_pairs_path,
                         header = T)
 
 # Load scATAC matrix
-matrix.atac = read.csv(atac_matix_path,
+matrix.atac_count = read.csv(atac_matix_path,
                        row.names = 1,
                        check.names = F)
+matrix.atac_count = Matrix(as.matrix(matrix.atac_count), sparse = TRUE)
+matrix.atac = BinarizeCounts(matrix.atac_count)
+rm(matrix.atac_count)
 
 # Load scRNA matrix
 matrix.rna_count = read.csv(rna_matix_path,
                       row.names = 1,
                       check.names = F)
+matrix.rna_count = Matrix(as.matrix(matrix.rna_count), sparse = TRUE)
 matrix.rna_count = matrix.rna_count[,colnames(matrix.atac)]
 
 # Normalize scRNA matrix
 matrix.rna = NormalizeData(matrix.rna_count)
+rm(matrix.rna_count)
 
 # Compute Kendall correlation
 pairs.E2G = kendall_mutliple_genes(pairs.E2G,
