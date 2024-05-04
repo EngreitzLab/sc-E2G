@@ -1,4 +1,4 @@
-GeneSymbol	gene_chr	gene_tss	gene_tss500bp	is_ubiqutious_uniform
+GeneSymbol	gene_chr	gene_tss	gene_tss500bp	is_ubiquitous_uniform
 A1BG	chr19	58353249	58353749	False
 A1BG-AS1	chr19	58351719	58352219	False
 A1CF	chr10	50885425	50885925	False
