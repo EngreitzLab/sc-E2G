@@ -1,3 +1,3 @@
-model	dataset	ABC_directory	feature_table	polynomial
-ATAC_test_cluster1	cluster1		resources/feature_tables/multiome_features.tsv	False
-ATAC_test_cluster2	cluster2		resources/feature_tables/multiome_features.tsv	False
+model	dataset	ABC_directory	feature_table	polynomial	override_params
+sample_model_multiome	K562_chr22_cluster1		resources/feature_tables/multiome_features_final7.tsv	False	
+sample_model_atac	K562_chr22_cluster1		resources/feature_tables/scATAC_features_final6.tsv	False	

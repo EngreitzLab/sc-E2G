@@ -3,9 +3,10 @@
 cell_clusters: "config/config_cell_clusters.tsv"
 
 ### OUTPUT
-results_dir: "results/"
+results_dir: "results/example_results/"
 
 ### PARAMS
 encode_re2g_dir: "ENCODE_rE2G"
 model_dir: "models/"
+reference_features: ["numTSSEnhGene", "distance", "activity_base", "TargetGenePromoterActivityQuantile", "numNearbyEnhancers", "sumNearbyEnhancers", "is_ubiquitous_uniform", "P2PromoterClass", "numCandidateEnhGene", "hic_contact_pl_scaled_adj", "ABC.Score", "ABC.Numerator", "ABC.Denominator", "normalized_dhs_prom", "normalized_dhs_enh", "normalized_atac_prom", "normalized_atac_enh", "Kendall", "ARC.E2G.Score"] 
 

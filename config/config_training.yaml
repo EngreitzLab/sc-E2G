@@ -4,8 +4,10 @@ cell_clusters: "config/config_cell_clusters.tsv"
 model_config: "config/config_models.tsv"
 
 ### OUTPUT
-results_dir: "results_training/"
+results_dir: "results/example_results/"
 
 ### PARAMS
 encode_re2g_dir: "ENCODE_rE2G"
-run_feature_analysis: True
+run_feature_analysis: False
+reference_features: ["numTSSEnhGene", "distance", "activity_base", "TargetGenePromoterActivityQuantile", "numNearbyEnhancers", "sumNearbyEnhancers", "is_ubiquitous_uniform", "P2PromoterClass", "numCandidateEnhGene", "hic_contact_pl_scaled_adj", "ABC.Score", "ABC.Numerator", "ABC.Denominator", "normalized_dhs_prom", "normalized_dhs_enh", "normalized_atac_prom", "normalized_atac_enh", "Kendall", "ARC.E2G.Score"] 
+
