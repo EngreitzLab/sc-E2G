@@ -32,7 +32,7 @@ mamba install -c conda-forge -c bioconda snakemake=7
 ## Apply model
 Before running this workflow, users should perform clustering to define cell clusters through regular single-cell analysis (such as Seurat & Signac).
 Required input data includes (refer to the example data in the `resources/example_chr22_multiome_cluster` folder):
-1. RNA matrix for each cell cluster. It should be normalized by the total UMI count of each cell, and can be with or without log transformation.
+1. RNA count matrix (gene x cell) for each cell cluster.
 2. Fragment files and their corresponding *.tbi index files for each cell cluster.
 
 To configure the pipeline:
