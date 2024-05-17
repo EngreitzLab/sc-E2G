@@ -126,11 +126,13 @@ rm(matrix.atac_count)
 # Load scRNA matrix
 if (file_ext(rna_matix_path) == "h5ad") {
   matrix.rna_count <- t(read_h5ad(rna_matix_path)$X)
-} else {
+} else if (file_ext(rna_matix_path) == "csv") {
   matrix.rna_count = read.csv(rna_matix_path,
                               row.names = 1,
                               check.names = F)
   matrix.rna_count = Matrix(as.matrix(matrix.rna_count), sparse = TRUE)
+} else {
+  matrix.rna_count = Read10X(rna_matix_path,gene.column=1)
 }
 
 matrix.rna_count = matrix.rna_count[,colnames(matrix.atac)]

@@ -7,6 +7,7 @@ suppressPackageStartupMessages({
   library(Signac)
   library(anndata)
   library(tools)
+  library(Seurat)
 })
 
 # Import parameters from Snakemake
@@ -25,10 +26,12 @@ mcols(bed.peaks) = NULL
 # Read the rna matrix to extract cell name
 if (file_ext(rna_matrix_path) == "h5ad") {
   rna_matrix <- t(read_h5ad(rna_matrix_path)$X)
-} else {
+} else if (file_ext(rna_matrix_path) == "csv") {
   rna_matrix = read.csv(rna_matrix_path,
                         row.names = 1,
                         check.names = F)
+} else {
+	rna_matrix = Read10X(rna_matix_path,gene.column=1)
 }
 
 # Create a list to store Signac Fragment object
