@@ -125,10 +125,11 @@ matrix.atac = BinarizeCounts(matrix.atac_count)
 rm(matrix.atac_count)
 
 # Load scRNA matrix
-matrix.rna_count = read.csv(rna_matix_path,
-                      row.names = 1,
-                      check.names = F)
-matrix.rna_count = Matrix(as.matrix(matrix.rna_count), sparse = TRUE)
+# matrix.rna_count = read.csv(rna_matix_path,
+#                       row.names = 1,
+#                       check.names = F)
+# matrix.rna_count = Matrix(as.matrix(matrix.rna_count), sparse = TRUE)
+matrix.rna_count = Read10X(rna_matix_path,gene.column=1)
 matrix.rna_count = matrix.rna_count[,colnames(matrix.atac)]
 
 # Normalize scRNA matrix

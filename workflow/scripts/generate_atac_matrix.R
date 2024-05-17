@@ -5,6 +5,7 @@ suppressPackageStartupMessages({
   library(genomation)
   library(GenomicRanges)
   library(Signac)
+  library(Seurat)
 })
 
 # Import parameters from Snakemake
@@ -21,10 +22,10 @@ bed.peaks = pairs.e2g[!duplicated(mcols(pairs.e2g)[,"PeakName"])]
 mcols(bed.peaks) = NULL
 
 # Read the rna matrix to extract cell name
-rna_matrix = read.csv(rna_matrix_path,
-                      row.names = 1,
-                      check.names = F)
-
+# rna_matrix = read.csv(rna_matrix_path,
+#                       row.names = 1,
+#                       check.names = F)
+rna_matrix = Read10X(rna_matix_path,gene.column=1)
 # Create a list to store Signac Fragment object
 list.fragments = list()
 cells.use = colnames(rna_matrix)
