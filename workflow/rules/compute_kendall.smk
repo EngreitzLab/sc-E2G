@@ -13,7 +13,7 @@ rule compute_kendall:
 				RESULTS_DIR, 
 				"{cluster}", 
 				"Kendall", 
-				"atac_matrix.csv.gz"
+				"atac_matrix.rds"
 			),
 		rna_matix = 
 			lambda wildcards: CELL_CLUSTER_DF.loc[wildcards.cluster, "rna_matrix_file"]

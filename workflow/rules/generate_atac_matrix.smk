@@ -18,7 +18,7 @@ rule generate_atac_matrix:
 				RESULTS_DIR, 
 				"{cluster}", 
 				"Kendall", 
-				"atac_matrix.csv.gz"
+				"atac_matrix.rds"
 			)
 	resources:
 		mem_mb=32*1000
