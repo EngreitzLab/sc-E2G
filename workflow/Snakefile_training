@@ -70,6 +70,7 @@ model_comparison_files.extend(expand(os.path.join(RESULTS_DIR, "performance_acro
 forward_feature_selection_auprc_files = list()
 backward_feature_selection_auprc_files = list()
 permutation_feature_importance_auprc_files = list()
+all_feature_set_files = list()
 
 if config["run_feature_analysis"]:
 	forward_feature_selection_auprc_files = expand(
@@ -109,23 +110,22 @@ if config["run_feature_analysis"]:
 		model = model_config["model"]
 	)
 
-# Only test all feature sets if polynomial == False and n_features < 14
-all_feature_set_files = list()
-for row in model_config.itertuples(index = False):
-	#if row.polynomial.startswith("False") or not row.polynomial:
-	if not row.polynomial:
-		features = pd.read_table(row.feature_table)
-		n_features = len(features)
-		if n_features < 14:
-			all_feature_set_files.append(
-				os.path.join(
-					RESULTS_DIR, 
-					row.dataset, 
-					row.model, 
-					"feature_analysis", 
-					"all_feature_sets.tsv"
+	# Only test all feature sets if polynomial == False and n_features < 14
+	for row in model_config.itertuples(index = False):
+		#if row.polynomial.startswith("False") or not row.polynomial:
+		if not row.polynomial:
+			features = pd.read_table(row.feature_table)
+			n_features = len(features)
+			if n_features < 14:
+				all_feature_set_files.append(
+					os.path.join(
+						RESULTS_DIR, 
+						row.dataset, 
+						row.model, 
+						"feature_analysis", 
+						"all_feature_sets.tsv"
+					)
 				)
-			)
 
 # define final output files 
 rule all:

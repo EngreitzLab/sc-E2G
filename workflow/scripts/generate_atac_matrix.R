@@ -40,8 +40,6 @@ atac.matrix <- FeatureMatrix(
   cells = cells.use
 )
 
-# Write the ATAC-seq matrix to a gzipped file
-write.csv(as.matrix(atac.matrix),
-          file = gzfile(atac_matrix_path),
-          quote = F)
-
+# Save ATAC-seq matrix
+saveRDS(atac.matrix,
+	atac_matrix_path)

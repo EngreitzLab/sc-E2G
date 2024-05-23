@@ -15,7 +15,7 @@ rule add_external_features:
 				"EnhancerPredictionsAllPutative_ARC.tsv.gz"
 			),
 		feature_table_file = 
-			lambda wildcards: encode_e2g.get_feature_table_file(wildcards.biosample)
+			os.path.join(RESULTS_DIR, "{biosample}", "feature_table.tsv")
 	output:
 		plus_external_features = 
 			os.path.join(
@@ -24,5 +24,7 @@ rule add_external_features:
 				"ActivityOnly_plus_external_features.tsv.gz")
 	conda:
 		"../envs/sc_e2g.yml"
+	resources:
+		mem_mb=32*1000
 	script:
 		"../scripts/integrate_kendall.R"

@@ -117,10 +117,7 @@ pairs.E2G = readGeneric(kendall_pairs_path,
                         header = T)
 
 # Load scATAC matrix
-matrix.atac_count = read.csv(atac_matix_path,
-                       row.names = 1,
-                       check.names = F)
-matrix.atac_count = Matrix(as.matrix(matrix.atac_count), sparse = TRUE)
+matrix.atac_count = readRDS(atac_matix_path)
 matrix.atac = BinarizeCounts(matrix.atac_count)
 rm(matrix.atac_count)
 
@@ -165,4 +162,3 @@ fwrite(df.pairs.E2G,
        row.names = F,
        quote = F,
        sep = "\t")
-
