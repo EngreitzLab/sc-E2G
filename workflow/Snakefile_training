@@ -56,7 +56,7 @@ include: os.path.join("rules", "make_kendall_pairs.smk")
 include: os.path.join("rules", "generate_atac_matrix.smk")
 include: os.path.join("rules", "compute_kendall.smk")
 include: os.path.join("rules", "arc_e2g.smk")
-include: os.path.join("rules", "add_external_features_training.smk")
+include: os.path.join("rules", "add_external_features.smk")
 
 ## Import model config table
 model_config = pd.read_table(config["model_config"], na_values="").fillna("None").set_index("model", drop=False)

@@ -81,6 +81,17 @@ def get_e2g_config(config, encode_re2g_dir):
 	e2g_config["model_dir"] = config["model_dir"]
 	return e2g_config
 
+# return path to CRISPR 
+def get_crispr_file(encode_re2g_dir):
+	# return asbolute path to CRISPR dataset within ENCODE-rE2G repo
+	e2g_config_file = os.path.join(encode_re2g_dir, "config/config_training.yaml")
+	with open(e2g_config_file, 'r') as stream:
+		e2g_config = yaml.safe_load(stream)
+	
+	crispr_features = os.path.join(encode_re2g_dir, e2g_config["crispr_dataset"])
+	return crispr_features
+
+
 # decide whether ARC-E2G should use "ABC.Score" or "powerlaw.Score"
 def get_abc_score_col(cluster):
 	row = CELL_CLUSTER_DF.loc[CELL_CLUSTER_DF["cluster"] == cluster].iloc[0]
