@@ -1,3 +1,5 @@
+CircleCI [![CircleCI](https://dl.circleci.com/status-badge/img/gh/EngreitzLab/sc-E2G.svg?style=svg)](https://app.circleci.com/pipelines/github/EngreitzLab/sc-E2G?branch=main)
+
 # sc-E2G
 Pipeline for running single cell ENCODE E2G.
 
