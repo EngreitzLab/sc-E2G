@@ -112,7 +112,6 @@ if config["run_feature_analysis"]:
 
 	# Only test all feature sets if polynomial == False and n_features < 14
 	for row in model_config.itertuples(index = False):
-		#if row.polynomial.startswith("False") or not row.polynomial:
 		if not row.polynomial:
 			features = pd.read_table(row.feature_table)
 			n_features = len(features)
