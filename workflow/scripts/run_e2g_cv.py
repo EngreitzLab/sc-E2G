@@ -36,21 +36,39 @@ def make_e2g_predictions_cv(df_enhancers, feature_list, cv_models, epsilon):
 
 	return df_enhancers
 
+
+def calculate_quantiles(score_column):
+	score_column_zero_replaced = score_column.replace(0, np.nan)
+	ranks = score_column_zero_replaced.rank(method='average', na_option='top') # Calculate the rank, treating NaNs as the lowest possible ranks
+	quantiles = (ranks - 1) / (len(score_column) - 1) # Calculate the quantiles
+	quantiles[score_column == 0] = 0 # Replace NaN ranks (original 0 values) with 0th quantile
+	return quantiles
+
 def qnorm_scores(df_enhancers, qnorm_ref, crispr_benchmarking):
 	# generate reference
-	ref_quantiles = np.linspace(0.01, 0.99, 99, endpoint=True) # [0.01, 0.02, ... , 0.99]
+	#ref_quantiles = np.linspace(0.01, 0.99, 99, endpoint=True) # [0.01, 0.02, ... , 0.99]
+	#n_unique_scores = len(np.unique(qnorm_ref))
+	n_unique_scores = 100000
+	print(n_unique_scores)
+	ref_quantiles = np.linspace(0, 1, n_unique_scores, endpoint=True) # [0, 0.01, 0.02, ... , 0.99, 1]
+	print("linspace")
 	ref_scores = np.quantile(qnorm_ref, ref_quantiles)
+	print("calc quantiles")
 	interpfunc = interpolate.interp1d(ref_quantiles, ref_scores, kind="linear", fill_value="extrapolate")
+	print("interp function")
 
 	# qnorm regular score
-	score_quantile = df_enhancers[MODEL + '.Score'].rank() / float(len(df_enhancers))
+	#score_quantile = df_enhancers[MODEL + '.Score'].rank() / float(len(df_enhancers))
+	score_quantile = calculate_quantiles(df_enhancers[MODEL + '.Score'])
+	print("score quantiles")
 	df_enhancers[MODEL + '.Score.qnorm'] = interpfunc(score_quantile).clip(0)
 	print(df_enhancers[MODEL + '.Score'].describe())
 	print(df_enhancers[MODEL + '.Score.qnorm'].describe())
 
 	# qnorm cv score
 	if crispr_benchmarking:
-		cv_score_quantile = df_enhancers[MODEL + '.Score.cv'].rank() / float(len(df_enhancers))
+		#cv_score_quantile = df_enhancers[MODEL + '.Score.cv'].rank() / float(len(df_enhancers))
+		cv_score_quantile = calculate_quantiles(df_enhancers[MODEL + '.Score.cv'])
 		df_enhancers[MODEL + '.Score.cv.qnorm'] = interpfunc(cv_score_quantile).clip(0)
 
 	return df_enhancers

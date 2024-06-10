@@ -48,7 +48,7 @@ snakemake -j1 --use-conda
 This command make take a while the first time you run it, as it needs to build the conda environments. 
 But if it takes more than 1 hour, that's usually a bad sign, meaning that you're not using mamba.
 
-Output will show up in the `results/` directory by default
+Output will show up in the `results/` directory by default, with the structure `results/cell_cluster/model_name/encode_e2g_predictions.tsv.gz`. The score column to use is `ENCODE-rE2G.Score.qnorm`.
 
 ## Train model
 
@@ -61,6 +61,7 @@ Note that trained models generated using polynomial features cannot directly be 
     - Each "dataset"/"cluster" **must** have an RNA matrix, fragment file
     - If an ABC_directory is not specified for a dataset, its entry in `cell_cluster_config` must also contain the required ABC biosample parameters
     - TO DO: specify how to generate and formats for Kendall parameters
+- To apply a trained model, it must contain the following files: 1) `model.pkl`, 2) `feature_table.tsv`, 3) `threshold_.XX` , 4) `qnorm_reference.tsv.gz` (single column with header `ENCODE-rE2G.Score` that contains raw scores for genomewide predictions)
 
 Running the pipeline:
 ```

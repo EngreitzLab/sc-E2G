@@ -48,7 +48,7 @@ module encode_e2g:
 	config: encode_e2g_config
 
 ## Include Snakemake rules from ENCODE_rE2G
-use rule * from encode_e2g exclude add_external_features, generate_e2g_predictions, all
+use rule * from encode_e2g exclude generate_e2g_predictions, format_external_features_config, all
 
 # expand biosamples config
 BIOSAMPLE_DF = pd.read_table(config["ABC_BIOSAMPLES"])
