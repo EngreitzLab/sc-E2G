@@ -1,3 +1,5 @@
+MAX_MEM_MB = 250 * 1000  # 250GB
+
 ## Update paths in the config obj to absolute path
 def make_paths_absolute(obj, base_path):
 	"""
@@ -14,6 +16,15 @@ def make_paths_absolute(obj, base_path):
 		if os.path.exists(new_file):
 			return new_file
 	return obj
+
+def determine_mem_mb(wildcards, input, attempt, min_gb=8):
+	# Memory resource calculator for snakemake rules
+	input_size_mb = input.size_mb
+	if ".gz" in str(input):
+		input_size_mb *= 8  # assume gz compressesed the file <= 8x
+	attempt_multiplier = 2 ** (attempt - 1)  # Double memory for each retry
+	mem_to_use_mb = attempt_multiplier *  max(4 * input_size_mb, min_gb * 1000)
+	return min(mem_to_use_mb, MAX_MEM_MB)
 
 
 ## Convert cell cluster config to biosample config for the ABC pipeline
@@ -69,6 +80,17 @@ def get_e2g_config(config, encode_re2g_dir):
 	e2g_config["results_dir"] = config["results_dir"]
 	e2g_config["model_dir"] = config["model_dir"]
 	return e2g_config
+
+# return path to CRISPR 
+def get_crispr_file(encode_re2g_dir):
+	# return asbolute path to CRISPR dataset within ENCODE-rE2G repo
+	e2g_config_file = os.path.join(encode_re2g_dir, "config/config_training.yaml")
+	with open(e2g_config_file, 'r') as stream:
+		e2g_config = yaml.safe_load(stream)
+	
+	crispr_features = os.path.join(encode_re2g_dir, e2g_config["crispr_dataset"])
+	return crispr_features
+
 
 # decide whether ARC-E2G should use "ABC.Score" or "powerlaw.Score"
 def get_abc_score_col(cluster):

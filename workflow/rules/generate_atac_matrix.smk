@@ -21,7 +21,7 @@ rule generate_atac_matrix:
 				"atac_matrix.rds"
 			)
 	resources:
-		mem_mb=32*1000
+		mem_mb=determine_mem_mb
 	conda:
 		"../envs/sc_e2g.yml"
 	script:

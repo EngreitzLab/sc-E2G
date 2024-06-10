@@ -43,4 +43,3 @@ atac.matrix <- FeatureMatrix(
 # Save ATAC-seq matrix
 saveRDS(atac.matrix,
 	atac_matrix_path)
-

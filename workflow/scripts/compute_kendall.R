@@ -162,4 +162,3 @@ fwrite(df.pairs.E2G,
        row.names = F,
        quote = F,
        sep = "\t")
-

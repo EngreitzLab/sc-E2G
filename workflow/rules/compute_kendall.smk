@@ -1,3 +1,5 @@
+from functools import partial
+
 ## compute Kendall correlation
 rule compute_kendall:
 	input:
@@ -25,7 +27,9 @@ rule compute_kendall:
 				"Kendall", 
 				"Pairs.Kendall.tsv.gz") 
 	resources: 
-		mem_mb=64*1000
+		mem_mb=partial(determine_mem_mb, min_gb=63),
+		#mem_mb=126000,
+		runtime=12*60
 	conda:
 		"../envs/sc_e2g.yml"
 	script:

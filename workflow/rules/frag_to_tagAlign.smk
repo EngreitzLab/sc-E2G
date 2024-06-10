@@ -14,6 +14,9 @@ rule frag_to_tagAlign:
 	conda:
 		"../envs/sc_e2g.yml"
 	threads: 5
+	resources:
+		mem_mb=determine_mem_mb,
+		runtime=720
 	shell:
 		"""
 		# Make, sort and compress tagAlign file from fragment file
