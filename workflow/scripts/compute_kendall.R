@@ -10,6 +10,8 @@ suppressPackageStartupMessages({
   library(Rcpp)
   library(data.table)
   library(Matrix)
+  library(anndata)
+  library(tools)
 })
 
 ## Define functions --------------------------------------------------------------------------------
@@ -122,10 +124,15 @@ matrix.atac = BinarizeCounts(matrix.atac_count)
 rm(matrix.atac_count)
 
 # Load scRNA matrix
-matrix.rna_count = read.csv(rna_matix_path,
-                      row.names = 1,
-                      check.names = F)
-matrix.rna_count = Matrix(as.matrix(matrix.rna_count), sparse = TRUE)
+if (file_ext(rna_matix_path) == "h5ad") {
+  matrix.rna_count <- t(read_h5ad(rna_matix_path)$X)
+} else {
+  matrix.rna_count = read.csv(rna_matix_path,
+                              row.names = 1,
+                              check.names = F)
+  matrix.rna_count = Matrix(as.matrix(matrix.rna_count), sparse = TRUE)
+}
+
 matrix.rna_count = matrix.rna_count[,colnames(matrix.atac)]
 
 # Normalize scRNA matrix
@@ -140,6 +147,10 @@ pairs.E2G = kendall_mutliple_genes(pairs.E2G,
                                    colname.enhancer_name = "PeakName",
                                    colname.output = "Kendall")
 
+# Compute mean log normalized gene expression
+pairs.E2G$mean_log_normalized_rna = 
+  rowMeans(matrix.rna)[pairs.E2G$TargetGene]
+
 # Write output to file
 df.pairs.E2G = 
   as.data.frame(pairs.E2G)[,c("seqnames",
@@ -148,6 +159,7 @@ df.pairs.E2G =
                               "TargetGene",
                               "PeakName",
                               "PairName",
+                              "mean_log_normalized_rna",
                               "Kendall")]
 colnames(df.pairs.E2G) = 
   c("chr",
@@ -156,6 +168,7 @@ colnames(df.pairs.E2G) =
     "TargetGene",
     "PeakName",
     "PairName",
+    "mean_log_normalized_rna",
     "Kendall")
 fwrite(df.pairs.E2G,
        file = kendall_predictions_path,
