@@ -33,3 +33,4 @@ dependencies:
   - matplotlib
   - bioconductor-genomicranges
   - bioconductor-genomation
+  - r-codetools
