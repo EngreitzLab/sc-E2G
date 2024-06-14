@@ -14,10 +14,8 @@ checkpoint features_required:
                 if (("ARC.E2G.Score" in columns[1]) or ("ARC.E2G.Score" in columns[2])):
                     ARC = True
         final_val = "Neither"
-        if ARC:
+        if ARC or Kendall:
             final_val = "ARC"
-        elif Kendall:
-            final_val = "Kendall"
         with open(output.to_generate, "w") as out:
             out.write(final_val)
 
