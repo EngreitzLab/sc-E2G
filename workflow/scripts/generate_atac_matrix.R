@@ -5,6 +5,8 @@ suppressPackageStartupMessages({
   library(genomation)
   library(GenomicRanges)
   library(Signac)
+  library(anndata)
+  library(tools)
 })
 
 # Import parameters from Snakemake
@@ -21,14 +23,19 @@ bed.peaks = pairs.e2g[!duplicated(mcols(pairs.e2g)[,"PeakName"])]
 mcols(bed.peaks) = NULL
 
 # Read the rna matrix to extract cell name
-rna_matrix = read.csv(rna_matrix_path,
-                      row.names = 1,
-                      check.names = F)
+if (file_ext(rna_matrix_path) == "h5ad") {
+  rna_matrix <- t(read_h5ad(rna_matrix_path)$X)
+} else {
+  rna_matrix = read.csv(rna_matrix_path,
+                        row.names = 1,
+                        check.names = F)
+}
 
 # Create a list to store Signac Fragment object
 list.fragments = list()
 cells.use = colnames(rna_matrix)
 names(cells.use) = colnames(rna_matrix)
+rm(rna_matrix)
 list.fragments[[1]] =
   CreateFragmentObject(path = atac_frag_path,
                        cells = cells.use)
