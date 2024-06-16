@@ -107,6 +107,21 @@ pairs.E2G.ABC = IntegrateABC(pairs.E2G.ABC,
                               "Kendall",
                               "ARC.E2G.Score")
 
+# Copy mean log normalized gene expression
+df.gene_exp = mcols(pairs.E2G.Kendall)[,c("TargetGene",
+                                          "mean_log_normalized_rna",
+                                          "RnaDetectedPercent",
+                                          "RnaPseudobulkTPM")]
+df.gene_exp = as.data.frame(df.gene_exp)
+df.gene_exp = df.gene_exp[!duplicated(df.gene_exp$TargetGene),]
+rownames(df.gene_exp) = df.gene_exp$TargetGene
+mcols(pairs.E2G.ABC)[,c("mean_log_normalized_rna",
+                        "RnaDetectedPercent",
+                        "RnaPseudobulkTPM")] = 
+  df.gene_exp[pairs.E2G.ABC$TargetGene,c("mean_log_normalized_rna",
+                                         "RnaDetectedPercent",
+                                         "RnaPseudobulkTPM")]
+
 # Write output to file
 df.output = as.data.frame(pairs.E2G.ABC)
 colnames(df.output)[1] = "chr"

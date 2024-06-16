@@ -28,6 +28,7 @@ dependencies:
   - r-Signac
   - r-Seurat
   - r-Rcpp
+  - r-anndata
   - seaborn
   - matplotlib
   - bioconductor-genomicranges

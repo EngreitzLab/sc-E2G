@@ -37,6 +37,12 @@ Required input data includes (refer to the example data in the `resources/exampl
 1. RNA count matrix (gene x cell) for each cell cluster.
 2. Fragment files and their corresponding *.tbi index files for each cell cluster.
 
+Note:
+- The RNA count matrix should be in either .csv.gz or .h5ad format.
+- The 4th column of the fragment file should correspond to the cell names in the RNA count matrix.
+- The fragment file should be sorted by coordinates. If it is not sorted, you can use the sortBed tool from bedtools: `sortBed atac_fragments.unsorted.tsv > atac_fragments.tsv`.
+- To create a .tbi index, use bgzip from HTSlib (https://github.com/samtools/htslib) instead of gzip to compress the fragment file: `bgzip atac_fragments.tsv`, then generate the corresponding .tbi index file using `tabix -p bed atac_fragments.tsv.gz`.
+
 To configure the pipeline:
 - Modify `config/config.yaml` to specify paths for results_dir.
 - Modify `config/config_cell_clusters.tsv` to specify the RNA matrix path, fragment file path, Hi-C file path, Hi-C data type, Hi-C resolution, TSS coordinates, and gene coordinates for each cell cluster.

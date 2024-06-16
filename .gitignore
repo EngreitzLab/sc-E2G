@@ -3,3 +3,4 @@ results_training/
 .snakemake/
 *.dot
 *.png
+test

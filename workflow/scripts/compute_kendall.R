@@ -10,6 +10,8 @@ suppressPackageStartupMessages({
   library(Rcpp)
   library(data.table)
   library(Matrix)
+  library(anndata)
+  library(tools)
 })
 
 ## Define functions --------------------------------------------------------------------------------
@@ -122,15 +124,19 @@ matrix.atac = BinarizeCounts(matrix.atac_count)
 rm(matrix.atac_count)
 
 # Load scRNA matrix
-matrix.rna_count = read.csv(rna_matix_path,
-                      row.names = 1,
-                      check.names = F)
-matrix.rna_count = Matrix(as.matrix(matrix.rna_count), sparse = TRUE)
+if (file_ext(rna_matix_path) == "h5ad") {
+  matrix.rna_count <- t(read_h5ad(rna_matix_path)$X)
+} else {
+  matrix.rna_count = read.csv(rna_matix_path,
+                              row.names = 1,
+                              check.names = F)
+  matrix.rna_count = Matrix(as.matrix(matrix.rna_count), sparse = TRUE)
+}
+
 matrix.rna_count = matrix.rna_count[,colnames(matrix.atac)]
 
 # Normalize scRNA matrix
 matrix.rna = NormalizeData(matrix.rna_count)
-rm(matrix.rna_count)
 
 # Compute Kendall correlation
 pairs.E2G = kendall_mutliple_genes(pairs.E2G,
@@ -140,6 +146,16 @@ pairs.E2G = kendall_mutliple_genes(pairs.E2G,
                                    colname.enhancer_name = "PeakName",
                                    colname.output = "Kendall")
 
+# Compute gene expression measurements
+df.exp_inf = data.frame(mean_log_normalized_rna = rowMeans(matrix.rna),
+                        RnaDetectedPercent = rowSums(matrix.rna_count > 0) / ncol(matrix.rna_count),
+                        RnaPseudobulkTPM =  rowSums(matrix.rna_count) / sum(matrix.rna_count)*10^6,
+                        row.names = rownames(matrix.rna_count))
+mcols(pairs.E2G)[,c("mean_log_normalized_rna",
+                    "RnaDetectedPercent",
+                    "RnaPseudobulkTPM")] = 
+  df.exp_inf[pairs.E2G$TargetGene,]
+
 # Write output to file
 df.pairs.E2G = 
   as.data.frame(pairs.E2G)[,c("seqnames",
@@ -148,6 +164,9 @@ df.pairs.E2G =
                               "TargetGene",
                               "PeakName",
                               "PairName",
+                              "mean_log_normalized_rna",
+                              "RnaDetectedPercent",
+                              "RnaPseudobulkTPM",
                               "Kendall")]
 colnames(df.pairs.E2G) = 
   c("chr",
@@ -156,6 +175,9 @@ colnames(df.pairs.E2G) =
     "TargetGene",
     "PeakName",
     "PairName",
+    "mean_log_normalized_rna",
+    "RnaDetectedPercent",
+    "RnaPseudobulkTPM",
     "Kendall")
 fwrite(df.pairs.E2G,
        file = kendall_predictions_path,
