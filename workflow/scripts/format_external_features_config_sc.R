@@ -28,16 +28,20 @@ if (!(exists('efc') && !is.null(efc))){
     efc =  data.frame(input_col = character(), source_col = character(), aggregate_function = character(), join_by = character(), source_file = character())
 }
 col_names = c("input_col", "source_col", "aggregate_function", "join_by", "source_file")
+
+ARC_rows = data.frame(input_col =c("mean_log_normalized_rna", "RnaPseudobulkTPM", "RnaDetectedPercent", "Kendall", "ARC.E2G.Score"),
+		source_col=c("mean_log_normalized_rna", "RnaPseudobulkTPM", "RnaDetectedPercent", "Kendall", "ARC.E2G.Score"),
+		aggregate_function=c("mean", "mean", "mean", "max", "mean"),
+		join_by=c("overlap", "overlap", "overlap", "overlap", "overlap"),
+		source_file=c(new_feature, new_feature, new_feature, new_feature, new_feature))
+
 Kendall_row = data.frame("Kendall", "Kendall", "max", "overlap", new_feature); names(Kendall_row) = col_names
-ARC_row = data.frame("ARC.E2G.Score", "ARC.E2G.Score", "mean", "overlap", new_feature); names(ARC_row) = col_names
-gene_expr_row = data.frame("mean_log_normalized_rna", "mean_log_normalized_rna", "mean", "overlap", new_feature); names(gene_expr_row) = col_names
 
 if (grepl("Pairs.Kendall.tsv.gz", new_feature)){
     efc = rbind(efc, Kendall_row)
 }
 if (grepl("EnhancerPredictionsAllPutative_ARC.tsv.gz", new_feature)){
-    efc = rbind(efc, Kendall_row)
-    efc = rbind(efc, ARC_row)
-	efc = rbind(efc, gene_expr_row)
+    efc = rbind(efc, ARC_rows)
 }
+
 fwrite(efc, file = snakemake@output$external_features_config, sep = "\t")
