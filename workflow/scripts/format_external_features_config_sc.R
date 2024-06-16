@@ -30,7 +30,7 @@ if (!(exists('efc') && !is.null(efc))){
 col_names = c("input_col", "source_col", "aggregate_function", "join_by", "source_file")
 Kendall_row = data.frame("Kendall", "Kendall", "max", "overlap", new_feature); names(Kendall_row) = col_names
 ARC_row = data.frame("ARC.E2G.Score", "ARC.E2G.Score", "mean", "overlap", new_feature); names(ARC_row) = col_names
-gene_expr_row = data.frame("mean_log_noramlized_rna", "mean_log_noramlized_rna", "mean", "overlap", new_feature); names(gene_expr_row) = col_names
+gene_expr_row = data.frame("mean_log_normalized_rna", "mean_log_normalized_rna", "mean", "overlap", new_feature); names(gene_expr_row) = col_names
 
 if (grepl("Pairs.Kendall.tsv.gz", new_feature)){
     efc = rbind(efc, Kendall_row)
