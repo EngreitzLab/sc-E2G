@@ -31,9 +31,9 @@ col_names = c("input_col", "source_col", "aggregate_function", "join_by", "sourc
 
 ARC_rows = data.frame(input_col =c("mean_log_normalized_rna", "RnaPseudobulkTPM", "RnaDetectedPercent", "Kendall", "ARC.E2G.Score"),
 		source_col=c("mean_log_normalized_rna", "RnaPseudobulkTPM", "RnaDetectedPercent", "Kendall", "ARC.E2G.Score"),
-		aggregate_function=c("mean", "mean", "mean", "max", "mean"),
-		join_by=c("overlap", "overlap", "overlap", "overlap", "overlap"),
-		source_file=c(new_feature, new_feature, new_feature, new_feature, new_feature))
+		aggregate_function=c("mean", "mean", "mean", "max", "mean"))
+ARC_rows$join_by="overlap"
+ARC_rows$source_file = new_feature
 
 Kendall_row = data.frame("Kendall", "Kendall", "max", "overlap", new_feature); names(Kendall_row) = col_names
 
