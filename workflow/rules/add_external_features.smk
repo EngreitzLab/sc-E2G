@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 checkpoint features_required:
     input:
         feature_table_file = os.path.join(RESULTS_DIR, "{sample}", "feature_table.tsv")
@@ -46,6 +47,3 @@ rule make_external_features_config:
         mem_mb=8*1000
     script:
         "../scripts/format_external_features_config_sc.R"
-
-
-

@@ -11,6 +11,7 @@ suppressPackageStartupMessages({
 })
 
 # Import parameters from Snakemake
+print(snakemake@input)
 kendall_pairs_path = snakemake@input[["kendall_pairs_path"]]
 atac_frag_path = snakemake@input[["atac_frag_path"]]
 rna_matrix_path = snakemake@input[["rna_matrix_path"]]
@@ -32,8 +33,8 @@ if (file_ext(rna_matrix_path) == "h5ad") {
                         check.names = F)
 } else {
 	rna_matrix = Read10X(rna_matix_path,gene.column=1)
+	rna_matrix = Read10X(rna_matrix_path,gene.column=1)
 }
-
 # Create a list to store Signac Fragment object
 list.fragments = list()
 cells.use = colnames(rna_matrix)
