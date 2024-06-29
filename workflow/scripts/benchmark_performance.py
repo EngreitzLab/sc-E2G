@@ -9,7 +9,10 @@ from training_functions import statistic_aupr, statistic_precision_at_threshold,
 
 def performance_summary(cluster, model_name, model_threshold, crispr_features, n_boot=1000):
 	# pct_missing
-	if model_name.startswith("multiome"):
+	if model_name=="distanceToTSS":
+		n_zero=0
+		crispr_features["ENCODE-rE2G.Score.cv.qnorm"] = -crispr_features["distanceToTSS"]
+	elif model_name.startswith("multiome"):
 		n_zero = crispr_features.loc[crispr_features['ARC.E2G.Score']==0].shape[0]
 	elif model_name.startswith("scATAC"):
 		n_zero = crispr_features.loc[crispr_features['ABC.Score']==0].shape[0]
@@ -17,9 +20,7 @@ def performance_summary(cluster, model_name, model_threshold, crispr_features, n
 	
 	# get scores
 	Y_true = crispr_features['Regulated'].values.astype(np.int64)
-	#Y_pred = crispr_features['ENCODE-rE2G.Score.cv.qnorm']
-	Y_pred = crispr_features['ENCODE-rE2G.Score.qnorm']
-
+	Y_pred = crispr_features['ENCODE-rE2G.Score.cv.qnorm']
 
 	# auprc
 	res_aupr =  scipy.stats.bootstrap((Y_true, Y_pred), statistic_aupr, n_resamples=n_boot, paired=True, confidence_level=0.95, method='BCa')
@@ -60,7 +61,6 @@ def performance_summary(cluster, model_name, model_threshold, crispr_features, n
 								 'recall_model_threshold': recall_mean_model_thresh, 'recall_model_threshold_95CI_low': recall_low_model_thresh, 'recall_model_threshold_95CI_high': recall_high_model_thresh,
 								 'pct_missing_elements': pct_missing}, index=[0])
 	return res_row
-
 	
 @click.command()
 @click.option("--crispr_features", required=True)
@@ -92,7 +92,10 @@ def main(crispr_features, output_file, model_names, model_thresholds):
 		crispr_features = pd.read_csv(row.crispr_file, sep="\t")
 		res_row = performance_summary(row.cluster, row.model_name, row.model_threshold, crispr_features)
 		df = pd.concat([df, res_row])
-			
+	# add distance
+	distance_row = performance_summary(cluster="None", model_name="distanceToTSS", model_threshold=-54350, crispr_features=crispr_features)
+	df = pd.concat([df, distance_row])		
+	
 	df = df.sort_values(by='AUPRC', ascending=False)
 	df.to_csv(output_file, sep = '\t', index=False)
 	
