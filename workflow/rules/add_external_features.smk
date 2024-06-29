@@ -16,6 +16,8 @@ rule add_external_features:
 			),
 		feature_table_file = 
 			lambda wildcards: encode_e2g.get_feature_table_file(wildcards.biosample)
+	resources:
+		mem_mb=32*1000
 	output:
 		plus_external_features = 
 			os.path.join(

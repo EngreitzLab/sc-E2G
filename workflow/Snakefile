@@ -68,6 +68,11 @@ rule all:
 			), 
 			cluster = CELL_CLUSTER_DF["cluster"]
 		),
+		encode_e2g_predictions_bedpe=[os.path.join(
+				RESULTS_DIR,
+				f"{cluster}",
+				"Predictions",
+				f"encode_e2g_predictions_threshold{encode_e2g.get_threshold(cluster)}.bedpe") for cluster in CELL_CLUSTER_DF["cluster"]],
 		prediction_stats = [os.path.join
 			(
 			RESULTS_DIR, 
@@ -75,5 +80,9 @@ rule all:
 			"Metrics", 
 			f"encode_e2g_predictions_threshold{encode_e2g.get_threshold(cluster)}_stats.tsv"
 			) for cluster in CELL_CLUSTER_DF["cluster"]],
-		plots = os.path.join(RESULTS_DIR, "qc_plots.pdf")
+		plots = os.path.join(RESULTS_DIR, "qc_plots.pdf"),
+		combined_all_putative_file=os.path.join(RESULTS_DIR, "combined_Predictions", "combined_only_expressed_genes_EnhancerPredictionsAllPutative.tsv.gz"),
+		combined_thresholded=[os.path.join(RESULTS_DIR, "combined_Predictions", f"encode_e2g_predictions_threshold{encode_e2g.get_threshold(cluster)}.tsv.gz")for cluster in CELL_CLUSTER_DF["cluster"]],
+		combined_variantOverlap = [os.path.join(RESULTS_DIR, "combined_Predictions", f"encode_e2g_predictions_threshold{encode_e2g.get_threshold(cluster)}.ForVariantOverlap.shrunk150bp.gz") for cluster in CELL_CLUSTER_DF["cluster"]],
+		combined_accessible_peaks=os.path.join(RESULTS_DIR, "combined_Predictions", "combined_accessible_peaks.tsv.gz"),
 

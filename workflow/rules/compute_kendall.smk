@@ -25,7 +25,7 @@ rule compute_kendall:
 				"Kendall", 
 				"Pairs.Kendall.tsv.gz") 
 	resources: 
-		mem_mb=64*1000
+		mem_mb=200*1000
 	conda:
 		"../envs/sc_e2g.yml"
 	script:
