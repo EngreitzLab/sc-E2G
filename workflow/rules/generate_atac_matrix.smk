@@ -1,3 +1,4 @@
+print(CELL_CLUSTER_DF["rna_matrix_file"].tolist())
 ## generate single-cell atac-seq matrix
 rule generate_atac_matrix:
 	input:
@@ -21,7 +22,7 @@ rule generate_atac_matrix:
 				"atac_matrix.rds"
 			)
 	resources:
-		mem_mb=determine_mem_mb
+		mem_mb=128*1000
 	conda:
 		"../envs/sc_e2g.yml"
 	script:

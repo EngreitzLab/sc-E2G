@@ -1,6 +1,10 @@
+run/
 results/
 results_training/
 .snakemake/
 *.dot
 *.png
 test
+sherlock/
+workflow/Snakefile_2
+workflow/rules/compute_kendall_2.smk
