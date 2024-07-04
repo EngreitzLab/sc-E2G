@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 checkpoint features_required:
     input:
         feature_table_file = os.path.join(RESULTS_DIR, "{sample}", "feature_table.tsv")
