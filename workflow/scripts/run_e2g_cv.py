@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from scipy import interpolate
 
-MODEL = "ENCODE-rE2G"
+SCORE_COL_BASE = "E2G"
 
 def make_e2g_predictions(df_enhancers, feature_list, trained_model, epsilon):
 	# transform the features
@@ -15,11 +15,11 @@ def make_e2g_predictions(df_enhancers, feature_list, trained_model, epsilon):
 	with open(trained_model, "rb") as f:
 		model = pickle.load(f)
 	probs = model.predict_proba(X)
-	df_enhancers[MODEL + ".Score"] = probs[:, 1]
+	df_enhancers[SCORE_COL_BASE + ".Score"] = probs[:, 1]
 	return df_enhancers
 	
 def make_e2g_predictions_cv(df_enhancers, feature_list, cv_models, epsilon):
-	score_name = MODEL + '.Score.cv'
+	score_name = SCORE_COL_BASE + '.Score.cv'
 	# get scores per chrom
 	X = df_enhancers.loc[:,feature_list]
 	X = np.log(np.abs(X) + epsilon)
@@ -58,18 +58,18 @@ def qnorm_scores(df_enhancers, qnorm_ref, crispr_benchmarking):
 	print("interp function")
 
 	# qnorm regular score
-	#score_quantile = df_enhancers[MODEL + '.Score'].rank() / float(len(df_enhancers))
-	score_quantile = calculate_quantiles(df_enhancers[MODEL + '.Score'])
+	#score_quantile = df_enhancers[SCORE_COL_BASE + '.Score'].rank() / float(len(df_enhancers))
+	score_quantile = calculate_quantiles(df_enhancers[SCORE_COL_BASE + '.Score'])
 	print("score quantiles")
-	df_enhancers[MODEL + '.Score.qnorm'] = interpfunc(score_quantile).clip(0)
-	print(df_enhancers[MODEL + '.Score'].describe())
-	print(df_enhancers[MODEL + '.Score.qnorm'].describe())
+	df_enhancers[SCORE_COL_BASE + '.Score.qnorm'] = interpfunc(score_quantile).clip(0)
+	print(df_enhancers[SCORE_COL_BASE + '.Score'].describe())
+	print(df_enhancers[SCORE_COL_BASE + '.Score.qnorm'].describe())
 
 	# qnorm cv score
 	if crispr_benchmarking:
-		#cv_score_quantile = df_enhancers[MODEL + '.Score.cv'].rank() / float(len(df_enhancers))
-		cv_score_quantile = calculate_quantiles(df_enhancers[MODEL + '.Score.cv'])
-		df_enhancers[MODEL + '.Score.cv.qnorm'] = interpfunc(cv_score_quantile).clip(0)
+		#cv_score_quantile = df_enhancers[SCORE_COL_BASE + '.Score.cv'].rank() / float(len(df_enhancers))
+		cv_score_quantile = calculate_quantiles(df_enhancers[SCORE_COL_BASE + '.Score.cv'])
+		df_enhancers[SCORE_COL_BASE + '.Score.cv.qnorm'] = interpfunc(cv_score_quantile).clip(0)
 
 	return df_enhancers
 	
@@ -95,13 +95,13 @@ def main(predictions, feature_table_file, trained_model, model_dir, crispr_bench
 	qnorm_ref = pd.read_csv(qnorm_file, sep="\t")
 	qnorm_ref = qnorm_ref['ENCODE-rE2G.Score'].to_numpy()
 
-	df_enhancers = make_e2g_predictions(df_enhancers, feature_list, trained_model, epsilon)  # add "ENCODE-rE2G.Score"
+	df_enhancers = make_e2g_predictions(df_enhancers, feature_list, trained_model, epsilon)  # add "E2G.Score"
 	
 	if crispr_benchmarking:
 		cv_models = os.path.join(model_dir, "cv_models")
-		df_enhancers = make_e2g_predictions_cv(df_enhancers, feature_list, cv_models, epsilon) # add "ENCODE-rE2G.Score.cv"
+		df_enhancers = make_e2g_predictions_cv(df_enhancers, feature_list, cv_models, epsilon) # add "E2G.Score.cv"
 
-	df_enhancers = qnorm_scores(df_enhancers, qnorm_ref, crispr_benchmarking) # add "ENCODE-rE2G.Score.qnorm" &  if crispr_benchmarking, "ENCODE-rE2G.Score.cv.qnorm"
+	df_enhancers = qnorm_scores(df_enhancers, qnorm_ref, crispr_benchmarking) # add "E2G.Score.qnorm" &  if crispr_benchmarking, "E2G.Score.cv.qnorm"
 
 	df_enhancers.to_csv(output_file, compression="gzip", sep="\t", index=False)
 

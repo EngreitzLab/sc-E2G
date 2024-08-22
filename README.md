@@ -4,7 +4,7 @@ CircleCI [![CircleCI](https://dl.circleci.com/status-badge/img/gh/EngreitzLab/sc
 Pipeline for running single cell ENCODE E2G.
 
 Input: Multiome dataset (ATAC and RNA)
-Output: Enhancer -> Gene Predictions (for each cell cluster)
+Output: Enhancer-gene regulatory link predictions (for each cell cluster)
 
 The pipeline consists of the following components:
 1. Compute ABC model predictions for each cell cluster
@@ -34,18 +34,20 @@ mamba install -c conda-forge -c bioconda snakemake=7
 ## Apply model
 Before running this workflow, users should perform clustering to define cell clusters through regular single-cell analysis (such as Seurat & Signac).
 Required input data includes (refer to the example data in the `resources/example_chr22_multiome_cluster` folder):
-1. RNA count matrix (gene x cell) for each cell cluster.
-2. Fragment files and their corresponding *.tbi index files for each cell cluster.
-
-Note:
-- The RNA count matrix should be in either .csv.gz or .h5ad format.
-- The 4th column of the fragment file should correspond to the cell names in the RNA count matrix.
-- The fragment file should be sorted by coordinates. If it is not sorted, you can use the sortBed tool from bedtools: `sortBed atac_fragments.unsorted.tsv > atac_fragments.tsv`.
-- To create a .tbi index, use bgzip from HTSlib (https://github.com/samtools/htslib) instead of gzip to compress the fragment file: `bgzip atac_fragments.tsv`, then generate the corresponding .tbi index file using `tabix -p bed atac_fragments.tsv.gz`.
+1. RNA count matrix (gene x cell) for each cell cluster
+	- Use unnormalized (raw) counts
+	- Must be in either .csv.gz or .h5ad format
+	- Ensure there are not duplicated gene names
+2. Pseudobulk fragment files and their corresponding *.tbi index files in the same directory for each cell cluster
+	- Must be sorted by coordinates and gzipped. If it is not sorted, you can use the sortBed tool from bedtools: `sortBed atac_fragments.unsorted.tsv > atac_fragments.tsv`.
+	- Must have 5 columns (no header) corresponding to chr, start, end, cell_name, read_count (usually just 1)
+	- The cell_name column should correspond to the cell names in the RNA count matrix. All cells in the RNA matrix must be represented in the fragment file. 
+	- To create a .tbi index, use `bgzip` from [HTSlib](https://github.com/samtools/htslib) instead of gzip to compress the fragment file: `bgzip atac_fragments.tsv`, then generate the corresponding .tbi index file using `tabix -p bed atac_fragments.tsv.gz`.
 
 To configure the pipeline:
 - Modify `config/config.yaml` to specify paths for results_dir.
 - Modify `config/config_cell_clusters.tsv` to specify the RNA matrix path, fragment file path, Hi-C file path, Hi-C data type, Hi-C resolution, TSS coordinates, and gene coordinates for each cell cluster.
+- Specify model directory from those in `models/` to be applied
 
 
 
@@ -54,9 +56,9 @@ Running the pipeline:
 snakemake -j1 --use-conda
 ```
 This command make take a while the first time you run it, as it needs to build the conda environments. 
-But if it takes more than 1 hour, that's usually a bad sign, meaning that you're not using mamba.
+But if it takes more than 1 hour, that's usually a bad sign, meaning that you're not using mamba and/or need more memory to build the environment.
 
-Output will show up in the `results/` directory by default, with the structure `results/cell_cluster/model_name/encode_e2g_predictions.tsv.gz`. The score column to use is `ENCODE-rE2G.Score.qnorm`.
+Output will show up in the `results/` directory by default, with the structure `results/cell_cluster/model_name/encode_e2g_predictions.tsv.gz`. The score column to use is `ENCODE-rE2G.Score.qnorm`. 
 
 ## Train model
 

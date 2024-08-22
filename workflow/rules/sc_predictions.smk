@@ -3,7 +3,7 @@
 rule overlap_features_crispr_apply:
 	input:
 		prediction_file = os.path.join(RESULTS_DIR, "{cluster}", "{model_name}", "encode_e2g_predictions.tsv.gz"),
-		crispr = encode_e2g_config['crispr_dataset'],
+		crispr = config['crispr_dataset'],
 		feature_table_file = os.path.join(RESULTS_DIR, "{cluster}", "feature_table.tsv"),
 		tss = encode_e2g_config['gene_TSS500']
 	output: 
@@ -64,25 +64,4 @@ rule run_e2g_qnorm:
 			--model_dir {params.model_dir} \
 			--crispr_benchmarking {params.crispr_benchmarking} \
 			--output_file {output.prediction_file}
-		"""
-
-rule filter_e2g_predictions:
-	input:
-		prediction_file = os.path.join(RESULTS_DIR, "{cluster}", "{model_name}", "encode_e2g_predictions.tsv.gz")
-	params:
-		include_self_promoter = encode_e2g_config["include_self_promoter"],
-		scripts_dir = SCRIPTS_DIR
-	conda:
-		"../envs/sc_e2g.yml"
-	resources:
-		mem_mb=determine_mem_mb
-	output:
-		thresholded = os.path.join(RESULTS_DIR, "{cluster}", "{model_name}", "encode_e2g_predictions_threshold{threshold}.tsv.gz")
-	shell:
-		"""
-		python {params.scripts_dir}/threshold_e2g_predictions.py \
-			--all_predictions_file {input.prediction_file} \
-			--threshold {wildcards.threshold} \
-			--include_self_promoter {params.include_self_promoter} \
-			--output_file {output.thresholded}
 		"""
