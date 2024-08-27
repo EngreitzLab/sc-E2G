@@ -35,7 +35,7 @@ rule crispr_benchmarking:
 			--crispr_features "{input.crispr_features}" \
 			--output_file {output.comp_table} \
 			--model_thresholds "{params.model_thresh}" \
-			--model_names "{params.model_names}"
+			--model_names "{params.model_names}" \
 		"""
 
 rule run_e2g_qnorm:
@@ -46,6 +46,7 @@ rule run_e2g_qnorm:
 		feature_table_file = lambda wildcards: encode_e2g.get_feature_table_file(wildcards.cluster, wildcards.model_name),
 		trained_model = lambda wildcards: encode_e2g.get_trained_model(wildcards.cluster, wildcards.model_name),
 		model_dir = lambda wildcards: encode_e2g._get_model_dir_from_wildcards(wildcards.cluster, wildcards.model_name, BIOSAMPLE_DF),
+		tpm_threshold =  lambda wildcards: encode_e2g.get_tpm_threshold(wildcards.cluster, wildcards.model_name, BIOSAMPLE_DF),
 		crispr_benchmarking = config["benchmark_performance"],
 		scripts_dir = SCRIPTS_DIR
 	conda:
@@ -60,6 +61,7 @@ rule run_e2g_qnorm:
 			--predictions {input.final_features} \
 			--feature_table_file {params.feature_table_file} \
 			--epsilon {params.epsilon} \
+			--tpm_threshold {params.tpm_threshold} \
 			--trained_model {params.trained_model} \
 			--model_dir {params.model_dir} \
 			--crispr_benchmarking {params.crispr_benchmarking} \

@@ -21,8 +21,8 @@ def performance_summary(cluster, model_name, model_threshold, crispr_features, n
 		n_zero_neg = crispr_neg.loc[crispr_features['ABC.Score']==0].shape[0]
 		crispr_features["score_column_to_use"] = crispr_features["ABC.Score"]
 	elif model_name.startswith("multiome"):
-		n_zero_pos = crispr_pos.loc[crispr_features['ARC.E2G.Score']==0].shape[0]
-		n_zero_neg = crispr_neg.loc[crispr_features['ARC.E2G.Score']==0].shape[0]
+		n_zero_pos = crispr_pos.loc[(crispr_features['ARC.E2G.Score']==0) or (crispr_features['E2G.Score.cv']==0)].shape[0]
+		n_zero_neg = crispr_neg.loc[(crispr_features['ARC.E2G.Score']==0) or (crispr_features['E2G.Score.cv']==0)].shape[0]
 		crispr_features["score_column_to_use"] = crispr_features['E2G.Score.cv.qnorm']
 	elif model_name.startswith("scATAC"):
 		n_zero_pos = crispr_pos.loc[crispr_features['ABC.Score']==0].shape[0]
