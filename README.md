@@ -1,7 +1,7 @@
 CircleCI [![CircleCI](https://dl.circleci.com/status-badge/img/gh/EngreitzLab/sc-E2G.svg?style=svg)](https://app.circleci.com/pipelines/github/EngreitzLab/sc-E2G?branch=main)
 
 # sc-E2G
-Pipeline for running single cell ENCODE E2G.
+Pipeline for running single cell ENCODE-rE2G.
 
 Input: Multiome dataset (ATAC and RNA)
 Output: Enhancer-gene regulatory link predictions (for each cell cluster)
@@ -58,7 +58,7 @@ snakemake -j1 --use-conda
 This command make take a while the first time you run it, as it needs to build the conda environments. 
 But if it takes more than 1 hour, that's usually a bad sign, meaning that you're not using mamba and/or need more memory to build the environment.
 
-Output will show up in the `results/` directory by default, with the structure `results/cell_cluster/model_name/encode_e2g_predictions.tsv.gz`. The score column to use is `ENCODE-rE2G.Score.qnorm`. 
+Output will show up in the `results/` directory by default, with the structure `results/cell_cluster/model_name/encode_e2g_predictions.tsv.gz`. The score column to use is `E2G.Score.qnorm`. 
 
 ## Train model
 
@@ -71,7 +71,7 @@ Note that trained models generated using polynomial features cannot directly be 
     - Each "dataset"/"cluster" **must** have an RNA matrix, fragment file
     - If an ABC_directory is not specified for a dataset, its entry in `cell_cluster_config` must also contain the required ABC biosample parameters
     - TO DO: specify how to generate and formats for Kendall parameters
-- To apply a trained model, it must contain the following files: 1) `model.pkl`, 2) `feature_table.tsv`, 3) `threshold_.XX` , 4) `qnorm_reference.tsv.gz` (single column with header `ENCODE-rE2G.Score` that contains raw scores for genomewide predictions)
+- To apply a trained model, it must contain the following files: 1) `model.pkl`, 2) `feature_table.tsv`, 3) `score_threshold_.XX` , 5) `tpm_threshold_YY` (YY=0 if ATAC-only model), 4) `qnorm_reference.tsv.gz` (single column with header `E2G.Score` that contains raw scores for genomewide predictions)
 
 Running the pipeline:
 ```
