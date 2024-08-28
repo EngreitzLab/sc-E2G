@@ -26,7 +26,6 @@ def determine_mem_mb(wildcards, input, attempt, min_gb=8):
 	mem_to_use_mb = attempt_multiplier *  max(4 * input_size_mb, min_gb * 1000)
 	return min(mem_to_use_mb, MAX_MEM_MB)
 
-
 ## Convert cell cluster config to biosample config for the ABC pipeline
 ## Each cell cluster is treated as a distinct biosample within the ABC framework
 def make_biosample_config(cluster_config, biosample_config, results_dir):

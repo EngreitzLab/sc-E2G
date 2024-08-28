@@ -9,6 +9,18 @@ suppressPackageStartupMessages({
 })
 
 ## Define functions --------------------------------------------------------------------------------
+recompute_distance <- function(output) {
+  output <- output %>%
+    mutate(enh_center = (chromStart + chromEnd) / 2) %>%
+    mutate(distanceToTSS = case_when(
+      is.na(distanceToTSS) & is.na(startTSS_ref) ~ abs(enh_center - (startTSS + endTSS) / 2),
+      is.na(distanceToTSS) ~ abs(enh_center - (startTSS_ref + endTSS_ref) / 2),
+      TRUE ~ distanceToTSS
+    )) %>%
+	select(-c(enh_center, startTSS_ref, endTSS_ref))
+
+	return(output)
+}
 
 # function to merge features with crispr data
 merge_feature_to_crispr <- function(crispr, features, feature_score_cols, agg_fun, fill_value) {
@@ -94,7 +106,7 @@ config = rbind(config, score_rows)
 config <- filter(config, feature %in% colnames(pred))
 
 # load tss annotations
-tss <- fread(snakemake@input$tss, col.names = c("chr", "start", "end", "name", "score", "strand"))
+tss <- fread(snakemake@input$tss, col.names = c("chr", "start", "end", "name", "score", "strand", "Ensembl_ID", "gene_type"))
 
 # create vector with aggregation functions for each feature
 agg_funs <- deframe(distinct(select(config, feature, aggregate_function)))
@@ -125,17 +137,9 @@ output <- tss %>%
 
 # re-calculate distance to tss based on crispr data for missing values
 if ("distanceToTSS" %in% colnames(output)) {
-  output <- output %>%
-    mutate(enh_center = (chromStart + chromEnd) / 2) %>%
-    mutate(distanceToTSS = case_when(
-      is.na(distanceToTSS) & is.na(startTSS_ref) ~ abs(enh_center - (startTSS + endTSS) / 2),
-      is.na(distanceToTSS) ~ abs(enh_center - (startTSS_ref + endTSS_ref) / 2),
-      TRUE ~ distanceToTSS
-    ))
+	output = recompute_distance(output)
 }
 
-# remove columns added to compute missing distance to TSS
-output <- select(output, -c(enh_center, startTSS_ref, endTSS_ref))
 
 # replace NAs with fill values if specified
 if (snakemake@wildcards$nafill == "NAfilled") {

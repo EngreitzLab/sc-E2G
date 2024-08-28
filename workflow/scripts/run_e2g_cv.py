@@ -38,12 +38,15 @@ def make_e2g_predictions_cv(df_enhancers, feature_list, cv_models, tpm_threshold
         idx_test = df_enhancers[df_enhancers['chr']==chr].index.values
         if len(idx_test)>0:
             X_test = X.loc[idx_test,:]
+            print(f"Length of X_test: {(X_test.shape)}")
             with open(os.path.join(cv_models, f"model_test_{chr}.pkl"), 'rb') as f:
                 model = pickle.load(f)
             probs = model.predict_proba(X_test)
+            print(f"Length of probs: {(probs.shape)}")
             if tpm_filter:
-                df_enhancers[idx_test, score_col  + ".ignoreTPM"] = probs[:, 1]
-                df_enhancers[idx_test, score_col] = [score if tpm >= tpm_threshold else 0 
+                print(f"Length of indexed df: {(len(df_enhancers.loc[idx_test, 'RNA_pseudobulkTPM']))}")
+                df_enhancers.loc[idx_test, score_col  + ".ignoreTPM"] = probs[:, 1]
+                df_enhancers.loc[idx_test, score_col] = [score if tpm >= tpm_threshold else 0 
                     for (score, tpm) in zip(df_enhancers.loc[idx_test, score_col + ".ignoreTPM"] , df_enhancers.loc[idx_test, "RNA_pseudobulkTPM"])]
             else:
                 df_enhancers.loc[idx_test, score_col] = probs[:,1]
@@ -63,7 +66,6 @@ def qnorm_scores(df_enhancers, qnorm_ref, crispr_benchmarking):
     #ref_quantiles = np.linspace(0.01, 0.99, 99, endpoint=True) # [0.01, 0.02, ... , 0.99]
     #n_unique_scores = len(np.unique(qnorm_ref))
     n_unique_scores = 100000
-    print(n_unique_scores)
     ref_quantiles = np.linspace(0, 1, n_unique_scores, endpoint=True) # [0, 0.01, 0.02, ... , 0.99, 1]
     ref_scores = np.quantile(qnorm_ref, ref_quantiles)
     interpfunc = interpolate.interp1d(ref_quantiles, ref_scores, kind="linear", fill_value="extrapolate")
@@ -76,7 +78,7 @@ def qnorm_scores(df_enhancers, qnorm_ref, crispr_benchmarking):
     print(df_enhancers[SCORE_COL_BASE + '.qnorm'].describe())
 
     # qnorm cv score
-    if crispr_benchmarking:
+    if str(crispr_benchmarking)=="True":
         cv_score_quantile = calculate_quantiles(df_enhancers[SCORE_COL_BASE + '.cv'])
         df_enhancers[SCORE_COL_BASE + '.cv.qnorm'] = interpfunc(cv_score_quantile).clip(0)
 
@@ -108,7 +110,7 @@ def main(predictions, feature_table_file, trained_model, model_dir, crispr_bench
 
     df_enhancers = make_e2g_predictions(df_enhancers, feature_list, trained_model, tpm_threshold, epsilon)  # add "E2G.Score" and potentially "E2G.Score.ignoreTPM"
     
-    if crispr_benchmarking:
+    if str(crispr_benchmarking)=="True":
         cv_models = os.path.join(model_dir, "cv_models")
         df_enhancers = make_e2g_predictions_cv(df_enhancers, feature_list, cv_models, tpm_threshold, epsilon) # add "E2G.Score.cv" and potentially "E2G.Score.cv.gnoreTPM"
 
