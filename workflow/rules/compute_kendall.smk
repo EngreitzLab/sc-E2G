@@ -10,14 +10,14 @@ rule compute_kendall:
 				"Kendall", 
 				"Pairs.tsv.gz"
 			),
-		atac_matix = 
+		atac_matrix = 
 			os.path.join(
 				RESULTS_DIR, 
 				"{cluster}", 
 				"Kendall", 
 				"atac_matrix.rds"
 			),
-		rna_matix = 
+		rna_matrix = 
 			lambda wildcards: CELL_CLUSTER_DF.loc[wildcards.cluster, "rna_matrix_file"]
 	output:
 		kendall_predictions = 
