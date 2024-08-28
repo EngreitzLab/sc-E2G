@@ -21,9 +21,15 @@ include: os.path.join("rules", "utils_training.smk")
 config = make_paths_absolute(config, os.getcwd())
 config["results_dir"] = os.path.join(os.getcwd(), config["results_dir"])
 
+
 ## Define global variables
 RESULTS_DIR = config["results_dir"] 
 CELL_CLUSTER_DF = pd.read_table(config["cell_clusters"]).set_index("cluster", drop=False)
+if "IGV_dir" in config:
+	IGV_DIR = config["IGV_dir"]
+else:
+	IGV_DIR = config["results_dir"]
+
 
 ## Convert cell cluster config to a biosample config for the ABC pipeline
 ## Treat each cell cluster as a distinct biosample
@@ -44,7 +50,7 @@ module encode_e2g:
 	snakefile:
 		os.path.join(config["encode_re2g_dir"], "workflow", "Snakefile_training")
 	config: get_e2g_training_config(config, config["encode_re2g_dir"])
-
+encode_e2g_config = get_e2g_training_config(config, config["encode_re2g_dir"])
 
 ## Include Snakemake rules from ENCODE_rE2G
 use rule * from encode_e2g exclude format_external_features_config, all

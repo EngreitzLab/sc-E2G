@@ -26,7 +26,6 @@ def determine_mem_mb(wildcards, input, attempt, min_gb=8):
 	mem_to_use_mb = attempt_multiplier *  max(4 * input_size_mb, min_gb * 1000)
 	return min(mem_to_use_mb, MAX_MEM_MB)
 
-
 ## Convert cell cluster config to biosample config for the ABC pipeline
 ## Each cell cluster is treated as a distinct biosample within the ABC framework
 def make_biosample_config(cluster_config, biosample_config, results_dir):
@@ -77,19 +76,29 @@ def get_e2g_config(config, encode_re2g_dir):
 	# Update ENCODE_rE2G configuration
 	e2g_config["E2G_DIR_PATH"] = encode_re2g_dir
 	e2g_config["ABC_BIOSAMPLES"] = config["ABC_BIOSAMPLES"]
+	e2g_config["IGV_dir"] = IGV_DIR
 	e2g_config["results_dir"] = config["results_dir"]
 	e2g_config["model_dir"] = config["model_dir"]
+	e2g_config["final_score_col"] = config["final_score_col"]
 	return e2g_config
 
 # return path to CRISPR 
 def get_crispr_file(encode_re2g_dir):
-	# return asbolute path to CRISPR dataset within ENCODE-rE2G repo
 	e2g_config_file = os.path.join(encode_re2g_dir, "config/config_training.yaml")
 	with open(e2g_config_file, 'r') as stream:
 		e2g_config = yaml.safe_load(stream)
 	
 	crispr_features = os.path.join(encode_re2g_dir, e2g_config["crispr_dataset"])
 	return crispr_features
+
+# return path to chr sizes 
+def get_chr_sizes(encode_re2g_dir):
+	e2g_config_file = os.path.join(encode_re2g_dir, "config/config.yaml")
+	with open(e2g_config_file, 'r') as stream:
+		e2g_config = yaml.safe_load(stream)
+	
+	chr_sizes = os.path.join(encode_re2g_dir, e2g_config["chr_sizes"])
+	return chr_sizes
 
 
 # decide whether ARC-E2G should use "ABC.Score" or "powerlaw.Score"

@@ -20,6 +20,10 @@ config = make_paths_absolute(config, os.getcwd())
 config["results_dir"] = os.path.join(os.getcwd(), config["results_dir"])
 
 ## Define global variables
+if "IGV_dir" in config:
+	IGV_DIR = config["IGV_dir"]
+else:
+	IGV_DIR = config["results_dir"]
 RESULTS_DIR = config["results_dir"] 
 SCRIPTS_DIR = os.path.join(os.getcwd(), "workflow", "scripts")
 CELL_CLUSTER_DF = pd.read_table(config["cell_clusters"]).set_index("cluster", drop=False)
@@ -37,10 +41,9 @@ make_biosample_config(
 	RESULTS_DIR
 )
 
-
 ## Import ENCODE_rE2G pipeline as a reusable module 
 encode_e2g_config = get_e2g_config(config, config["encode_re2g_dir"])
-encode_e2g_config["crispr_dataset"] = get_crispr_file( config["encode_re2g_dir"])
+config["crispr_dataset"] = get_crispr_file( config["encode_re2g_dir"])
 
 module encode_e2g:
 	snakefile:
@@ -48,7 +51,7 @@ module encode_e2g:
 	config: encode_e2g_config
 
 ## Include Snakemake rules from ENCODE_rE2G
-use rule * from encode_e2g exclude generate_e2g_predictions, filter_e2g_predictions, format_external_features_config, all
+use rule * from encode_e2g exclude generate_e2g_predictions, format_external_features_config, all
 
 # expand biosamples config
 BIOSAMPLE_DF = pd.read_table(config["ABC_BIOSAMPLES"])
@@ -61,24 +64,28 @@ include: os.path.join("rules", "generate_atac_matrix.smk")
 include: os.path.join("rules", "compute_kendall.smk")
 include: os.path.join("rules", "arc_e2g.smk")
 include: os.path.join("rules", "add_external_features.smk")
-include: os.path.join("rules", "crispr_benchmarking.smk")
-
+include: os.path.join("rules", "sc_predictions.smk")
 
 
 ## Define the final outputs of the pipeline
-#  file names
 output_files = []
-encode_e2g_predictions = expand(
-			os.path.join(RESULTS_DIR, "{biosample}", "{model_name}", "encode_e2g_predictions.tsv.gz"), zip, biosample=BIOSAMPLE_DF['biosample'], model_name=BIOSAMPLE_DF['model_dir_base'])
-prediction_stats = expand(
-			os.path.join(RESULTS_DIR, "{biosample}", "{model_name}", "encode_e2g_predictions_threshold{threshold}_stats.tsv"), zip, biosample=BIOSAMPLE_DF["biosample"],
-			model_name=BIOSAMPLE_DF['model_dir_base'], threshold=BIOSAMPLE_DF["model_threshold"]),
-plots =os.path.join(RESULTS_DIR, "qc_plots.pdf")
+biosample_model = list(zip(BIOSAMPLE_DF["biosample"], BIOSAMPLE_DF["model_dir_base"]))
+biosample_model_threshold = list(zip(BIOSAMPLE_DF["biosample"], BIOSAMPLE_DF["model_dir_base"], BIOSAMPLE_DF["model_threshold"]))
+
+encode_e2g_predictions = [os.path.join(RESULTS_DIR, biosample, model_name, "encode_e2g_predictions.tsv.gz") for biosample,model_name in biosample_model]
+prediction_stats = [os.path.join(RESULTS_DIR, biosample, model_name, f"encode_e2g_predictions_threshold{threshold}_stats.tsv") for biosample,model_name,threshold in biosample_model_threshold]
+plots = os.path.join(RESULTS_DIR, "qc_plots.pdf")
+
+bedpe_files = [os.path.join(IGV_DIR, biosample, model_name, f"encode_e2g_predictions_threshold{threshold}.bedpe") for biosample,model_name,threshold in biosample_model_threshold]
+atac_bw = [os.path.join(IGV_DIR, biosample, "ATAC.bw") for biosample in BIOSAMPLE_DF["biosample"]]
+
 model_perf = os.path.join(RESULTS_DIR, "crispr_benchmarking_performance_summary.tsv")
 
 output_files.extend(encode_e2g_predictions)
 output_files.extend(prediction_stats)
 output_files.append(plots)
+output_files.extend(bedpe_files)
+output_files.extend(atac_bw)
 
 if config["benchmark_performance"]:
  	output_files.append(model_perf)
