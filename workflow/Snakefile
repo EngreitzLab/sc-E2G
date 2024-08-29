@@ -70,9 +70,9 @@ include: os.path.join("rules", "crispr_benchmarking.smk")
 output_files = []
 encode_e2g_predictions = expand(
 			os.path.join(RESULTS_DIR, "{biosample}", "{model_name}", "encode_e2g_predictions.tsv.gz"), zip, biosample=BIOSAMPLE_DF['biosample'], model_name=BIOSAMPLE_DF['model_dir_base'])
-prediction_stats = expand(
-			os.path.join(RESULTS_DIR, "{biosample}", "{model_name}", "encode_e2g_predictions_threshold{threshold}_stats.tsv"), zip, biosample=BIOSAMPLE_DF["biosample"],
-			model_name=BIOSAMPLE_DF['model_dir_base'], threshold=BIOSAMPLE_DF["model_threshold"]),
+#prediction_stats = expand(
+#			os.path.join(RESULTS_DIR, "{biosample}", "{model_name}", "encode_e2g_predictions_threshold{threshold}_stats.tsv"), zip, biosample=BIOSAMPLE_DF["biosample"],
+#			model_name=BIOSAMPLE_DF['model_dir_base'], threshold=BIOSAMPLE_DF["model_threshold"]),
 plots =os.path.join(RESULTS_DIR, "qc_plots.pdf")
 model_perf = os.path.join(RESULTS_DIR, "crispr_benchmarking_performance_summary.tsv")
 
