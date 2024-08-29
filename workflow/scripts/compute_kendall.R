@@ -126,7 +126,7 @@ rm(matrix.atac_count)
 # Load scRNA matrix
 if (file_ext(rna_matix_path) == "h5ad") {
   matrix.rna_count <- t(read_h5ad(rna_matix_path)$X)
-} else if (file_ext(rna_matix_path) == "csv") {
+} else if (file_ext(rna_matix_path) == "gz") {
   matrix.rna_count = read.csv(rna_matix_path,
                               row.names = 1,
                               check.names = F)

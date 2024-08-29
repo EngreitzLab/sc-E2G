@@ -77,7 +77,7 @@ rule filter_e2g_predictions:
 	resources:
 		mem_mb=determine_mem_mb
 	output:
-		thresholded = os.path.join(RESULTS_DIR, "{biosample}", "{model_name}", "encode_e2g_predictions_threshold{threshold}.tsv.gz")
+		thresholded = os.path.join(RESULTS_DIR, "{cluster}", "{model_name}", "encode_e2g_predictions_threshold{threshold}.tsv.gz")
 	shell:
 		"""
 		python {params.scripts_dir}/threshold_e2g_predictions.py \
