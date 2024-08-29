@@ -109,8 +109,8 @@ kendall_mutliple_genes = function(bed.E2G,
 
 # Import parameters from Snakemake
 kendall_pairs_path = snakemake@input$kendall_pairs_path
-atac_matix_path = snakemake@input$atac_matix
-rna_matix_path = snakemake@input$rna_matix
+atac_matrix_path = snakemake@input$atac_matrix
+rna_matrix_path = snakemake@input$rna_matrix
 kendall_predictions_path = snakemake@output$kendall_predictions
 
 # Load candidate E-G pairs
@@ -119,12 +119,12 @@ pairs.E2G = readGeneric(kendall_pairs_path,
                         header = T)
 
 # Load scATAC matrix
-matrix.atac_count = readRDS(atac_matix_path)
+matrix.atac_count = readRDS(atac_matrix_path)
 matrix.atac = BinarizeCounts(matrix.atac_count)
 rm(matrix.atac_count)
 
 # Load scRNA matrix
-if (file_ext(rna_matix_path) == "h5ad") {
+if (file_ext(rna_matrix_path) == "h5ad") {
   matrix.rna_count <- t(read_h5ad(rna_matix_path)$X)
 } else if (file_ext(rna_matix_path) == "gz") {
   matrix.rna_count = read.csv(rna_matix_path,

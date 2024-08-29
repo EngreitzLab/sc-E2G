@@ -9,18 +9,33 @@ from training_functions import statistic_aupr, statistic_precision_at_threshold,
 
 def performance_summary(cluster, model_name, model_threshold, crispr_features, n_boot=1000):
 	# pct_missing
+	crispr_pos = crispr_features.loc[crispr_features["Regulated"]==True]
+	crispr_neg = crispr_features.loc[crispr_features["Regulated"]==False]
+
 	if model_name=="distanceToTSS":
-		n_zero=0
-		crispr_features["ENCODE-rE2G.Score.cv.qnorm"] = -crispr_features["distanceToTSS"]
+		n_zero_pos=0
+		n_zero_neg=0
+		crispr_features["score_column_to_use"] = -crispr_features["distanceToTSS"]
+	elif model_name=="scATAC_ABC":
+		n_zero_pos = crispr_pos.loc[crispr_features['ABC.Score']==0].shape[0]
+		n_zero_neg = crispr_neg.loc[crispr_features['ABC.Score']==0].shape[0]
+		crispr_features["score_column_to_use"] = crispr_features["ABC.Score"]
 	elif model_name.startswith("multiome"):
-		n_zero = crispr_features.loc[crispr_features['ARC.E2G.Score']==0].shape[0]
+		n_zero_pos = crispr_pos.loc[(crispr_features['ARC.E2G.Score']==0) | (crispr_features['E2G.Score.cv']==0)].shape[0]
+		n_zero_neg = crispr_neg.loc[(crispr_features['ARC.E2G.Score']==0) | (crispr_features['E2G.Score.cv']==0)].shape[0]
+		crispr_features["score_column_to_use"] = crispr_features['E2G.Score.cv.qnorm']
 	elif model_name.startswith("scATAC"):
-		n_zero = crispr_features.loc[crispr_features['ABC.Score']==0].shape[0]
-	pct_missing = n_zero/crispr_features.shape[0]
+		n_zero_pos = crispr_pos.loc[crispr_features['ABC.Score']==0].shape[0]
+		n_zero_neg = crispr_neg.loc[crispr_features['ABC.Score']==0].shape[0]
+		crispr_features["score_column_to_use"] = crispr_features['E2G.Score.cv.qnorm']
+
+	pct_missing_pos = n_zero_pos/crispr_pos.shape[0]
+	pct_missing_neg = n_zero_neg/crispr_neg.shape[0]
+	pct_missing_total = (n_zero_pos + n_zero_neg)/crispr_features.shape[0]
 	
 	# get scores
 	Y_true = crispr_features['Regulated'].values.astype(np.int64)
-	Y_pred = crispr_features['ENCODE-rE2G.Score.cv.qnorm']
+	Y_pred = crispr_features['score_column_to_use']
 
 	# auprc
 	res_aupr =  scipy.stats.bootstrap((Y_true, Y_pred), statistic_aupr, n_resamples=n_boot, paired=True, confidence_level=0.95, method='BCa')
@@ -59,7 +74,7 @@ def performance_summary(cluster, model_name, model_threshold, crispr_features, n
 								 'precision_50_pct_recall': prec_50_mean, 'precision_50_pct_recall_95CI_low': prec_50_low, 'precision_50_pct_recall_95CI_high': prec_50_high, 'threshold_50_pct_recall': thresh_50,
 								 'precision_model_threshold': prec_mean_model_thresh, 'precision_model_threshold_95CI_low': prec_low_model_thresh, 'precision_model_threshold_95CI_high': prec_high_model_thresh,
 								 'recall_model_threshold': recall_mean_model_thresh, 'recall_model_threshold_95CI_low': recall_low_model_thresh, 'recall_model_threshold_95CI_high': recall_high_model_thresh,
-								 'pct_missing_elements': pct_missing}, index=[0])
+								 'pct_missing_pos': pct_missing_pos, 'pct_missing_neg': pct_missing_neg, 'pct_missing_total': pct_missing_total}, index=[0])
 	return res_row
 	
 @click.command()
@@ -78,13 +93,23 @@ def main(crispr_features, output_file, model_names, model_thresholds):
 	model_dict = {model_name: float(threshold) for model_name, threshold in zip(model_names.split(" "), model_thresholds.split(" "))}
 	preds['model_threshold'] = [model_dict[name] for name in preds['model_name']]
 
+	# add ABC
+	all_models = preds["model_name"].unique().tolist()
+	sc_e2g = [m for m in all_models if m in ["multiome_7features", "scATAC_6features"]]
+
+	if len(sc_e2g) > 0:
+		filt = preds.loc[preds["model_name"]==sc_e2g[0]]
+		filt["model_name"] = "scATAC_ABC"
+		filt["model_threshold"] = 0.015
+		preds = pd.concat([preds, filt])
+
 	# initiate final df
 	df = pd.DataFrame(columns = ['cluster', 'model', 'AUPRC', 'AUPRC_95CI_low', 'AUPRC_95CI_high',
 								 'precision_70_pct_recall', 'precision_70_pct_recall_95CI_low', 'precision_70_pct_recall_95CI_high', 'threshold_70_pct_recall', 
 								 'precision_50_pct_recall', 'precision_50_pct_recall_95CI_low', 'precision_50_pct_recall_95CI_high', 'threshold_50_pct_recall', 
 								 'precision_model_threshold', 'precision_model_threshold_95CI_low', 'precision_model_threshold_95CI_high',
 								 'recall_model_threshold', 'recall_model_threshold_95CI_low', 'recall_model_threshold_95CI_high',
-								 'pct_missing_elements'])
+								 'pct_missing_pos', 'pct_missing_neg', 'pct_missing_total'])
 	
 	# iterate through list
 	for row in preds.itertuples(index=False):
