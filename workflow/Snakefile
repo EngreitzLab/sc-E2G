@@ -78,14 +78,19 @@ plots = os.path.join(RESULTS_DIR, "qc_plots.pdf")
 
 bedpe_files = [os.path.join(IGV_DIR, biosample, model_name, f"encode_e2g_predictions_threshold{threshold}.bedpe") for biosample,model_name,threshold in biosample_model_threshold]
 atac_bw = [os.path.join(IGV_DIR, biosample, "ATAC.bw") for biosample in BIOSAMPLE_DF["biosample"]]
+atac_bw_norm = [os.path.join(IGV_DIR, biosample, "ATAC_norm.bw") for biosample in BIOSAMPLE_DF["biosample"]]
 
 model_perf = os.path.join(RESULTS_DIR, "crispr_benchmarking_performance_summary.tsv")
 
+## Choose relevant output files
 output_files.extend(encode_e2g_predictions)
 output_files.extend(prediction_stats)
 output_files.append(plots)
-output_files.extend(bedpe_files)
-output_files.extend(atac_bw)
+
+if config["make_IGV_tracks"]:
+	output_files.extend(bedpe_files)
+	output_files.extend(atac_bw)
+	output_files.extend(atac_bw_norm)
 
 if config["benchmark_performance"]:
  	output_files.append(model_perf)
