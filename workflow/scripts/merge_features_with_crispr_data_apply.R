@@ -9,18 +9,6 @@ suppressPackageStartupMessages({
 })
 
 ## Define functions --------------------------------------------------------------------------------
-recompute_distance <- function(output) {
-  output <- output %>%
-    mutate(enh_center = (chromStart + chromEnd) / 2) %>%
-    mutate(distanceToTSS = case_when(
-      is.na(distanceToTSS) & is.na(startTSS_ref) ~ abs(enh_center - (startTSS + endTSS) / 2),
-      is.na(distanceToTSS) ~ abs(enh_center - (startTSS_ref + endTSS_ref) / 2),
-      TRUE ~ distanceToTSS
-    )) %>%
-	select(-c(enh_center, startTSS_ref, endTSS_ref))
-
-	return(output)
-}
 
 # function to merge features with crispr data
 merge_feature_to_crispr <- function(crispr, features, feature_score_cols, agg_fun, fill_value) {
@@ -135,10 +123,15 @@ output <- tss %>%
   select(measuredGeneSymbol = name, startTSS_ref = start, endTSS_ref = end) %>%
   left_join(output, ., by = "measuredGeneSymbol")
 
-# re-calculate distance to tss based on crispr data for missing values
-if ("distanceToTSS" %in% colnames(output)) {
-	output = recompute_distance(output)
-}
+# re-calculate distance to tss based on reference
+output <-  output %>%
+		mutate(enh_center = (chromStart + chromEnd) / 2) %>%
+		mutate(distanceToTSS = case_when(
+			is.na(startTSS_ref) ~ abs(enh_center - (startTSS + endTSS) / 2),
+			TRUE ~ abs(enh_center - (startTSS_ref + endTSS_ref) / 2)
+		)) %>%
+		mutate(distance = distanceToTSS) %>%
+		select(-c(enh_center, startTSS_ref, endTSS_ref))
 
 
 # replace NAs with fill values if specified
