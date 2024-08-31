@@ -19,6 +19,7 @@ def get_e2g_training_config(config, encode_re2g_dir):
 	e2g_config["model_config"] = config["model_config"]
 	e2g_config["run_feature_analysis"] = config["run_feature_analysis"]
 	e2g_config["reference_features"] = config["reference_features"]
+	e2g_config["final_score_col"] = config["final_score_col"]
 	return e2g_config
 
 

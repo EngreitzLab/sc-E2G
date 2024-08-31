@@ -87,14 +87,14 @@ crispr <- select(crispr, -c(pair_uid, merged_uid, merged_start, merged_end))
 
 # load feature config file and only retain entries for features in input data
 config <- fread(snakemake@input$feature_table_file) %>% select(feature, aggregate_function, fill_value)
-score_rows = data.frame(feature=c("ENCODE-rE2G.Score", "ENCODE-rE2G.Score.cv", "ENCODE-rE2G.Score.qnorm", "ENCODE-rE2G.Score.cv.qnorm"))
+score_rows = data.frame(feature=c("E2G.Score", "E2G.Score.cv", "E2G.Score.cv.ignoreTPM", "E2G.Score.qnorm", "E2G.Score.cv.qnorm"))
 score_rows$aggregate_function = "mean"
 score_rows$fill_value = 0
 config = rbind(config, score_rows)
 config <- filter(config, feature %in% colnames(pred))
 
 # load tss annotations
-tss <- fread(snakemake@input$tss, col.names = c("chr", "start", "end", "name", "score", "strand"))
+tss <- fread(snakemake@input$tss, col.names = c("chr", "start", "end", "name", "score", "strand", "Ensembl_ID", "gene_type"))
 
 # create vector with aggregation functions for each feature
 agg_funs <- deframe(distinct(select(config, feature, aggregate_function)))
@@ -123,19 +123,16 @@ output <- tss %>%
   select(measuredGeneSymbol = name, startTSS_ref = start, endTSS_ref = end) %>%
   left_join(output, ., by = "measuredGeneSymbol")
 
-# re-calculate distance to tss based on crispr data for missing values
-if ("distanceToTSS" %in% colnames(output)) {
-  output <- output %>%
-    mutate(enh_center = (chromStart + chromEnd) / 2) %>%
-    mutate(distanceToTSS = case_when(
-      is.na(distanceToTSS) & is.na(startTSS_ref) ~ abs(enh_center - (startTSS + endTSS) / 2),
-      is.na(distanceToTSS) ~ abs(enh_center - (startTSS_ref + endTSS_ref) / 2),
-      TRUE ~ distanceToTSS
-    ))
-}
+# re-calculate distance to tss based on reference
+output <-  output %>%
+		mutate(enh_center = (chromStart + chromEnd) / 2) %>%
+		mutate(distanceToTSS = case_when(
+			is.na(startTSS_ref) ~ abs(enh_center - (startTSS + endTSS) / 2),
+			TRUE ~ abs(enh_center - (startTSS_ref + endTSS_ref) / 2)
+		)) %>%
+		mutate(distance = distanceToTSS) %>%
+		select(-c(enh_center, startTSS_ref, endTSS_ref))
 
-# remove columns added to compute missing distance to TSS
-output <- select(output, -c(enh_center, startTSS_ref, endTSS_ref))
 
 # replace NAs with fill values if specified
 if (snakemake@wildcards$nafill == "NAfilled") {
