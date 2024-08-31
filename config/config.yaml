@@ -2,9 +2,12 @@
 ### INPUT
 cell_clusters: "config/config_cell_clusters.tsv"
 benchmark_performance: False # only set to True if all clusters are K562
+make_IGV_tracks: False # create ATAC bw and prediction bedpe files?
 
 ### OUTPUT
 results_dir: "results/example_results/"
+IGV_dir: "results/example_results/"
+
 
 ### PARAMS
 encode_re2g_dir: "ENCODE_rE2G"

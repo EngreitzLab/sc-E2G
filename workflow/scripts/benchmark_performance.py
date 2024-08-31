@@ -15,7 +15,8 @@ def performance_summary(cluster, model_name, model_threshold, crispr_features, n
 	if model_name=="distanceToTSS":
 		n_zero_pos=0
 		n_zero_neg=0
-		crispr_features["score_column_to_use"] = -crispr_features["distanceToTSS"]
+		dist_col = [x for x in ["distance", "distanceToTSS"] if x in crispr_features.columns][0]
+		crispr_features["score_column_to_use"] = -crispr_features[dist_col]
 	elif model_name=="scATAC_ABC":
 		n_zero_pos = crispr_pos.loc[crispr_features['ABC.Score']==0].shape[0]
 		n_zero_neg = crispr_neg.loc[crispr_features['ABC.Score']==0].shape[0]
