@@ -15,7 +15,8 @@ def performance_summary(cluster, model_name, model_threshold, crispr_features, n
 	if model_name=="distanceToTSS":
 		n_zero_pos=0
 		n_zero_neg=0
-		crispr_features["score_column_to_use"] = -crispr_features["distanceToTSS"]
+		dist_col = [x for x in ["distance", "distanceToTSS"] if x in crispr_features.columns][0]
+		crispr_features["score_column_to_use"] = -crispr_features[dist_col]
 	elif model_name=="scATAC_ABC":
 		n_zero_pos = crispr_pos.loc[crispr_features['ABC.Score']==0].shape[0]
 		n_zero_neg = crispr_neg.loc[crispr_features['ABC.Score']==0].shape[0]
@@ -95,7 +96,7 @@ def main(crispr_features, output_file, model_names, model_thresholds):
 
 	# add ABC
 	all_models = preds["model_name"].unique().tolist()
-	sc_e2g = [m for m in all_models if m in ["multiome_7features", "scATAC_6features"]]
+	sc_e2g = [m for m in all_models if m in ["multiome_powerlaw_v2", "scATAC_powerlaw_v2"]]
 
 	if len(sc_e2g) > 0:
 		filt = preds.loc[preds["model_name"]==sc_e2g[0]]
