@@ -18,7 +18,7 @@ rule overlap_features_crispr_apply:
 # calculate performance metrics 
 rule crispr_benchmarking:
 	input:
-		crispr_features = expand(os.path.join(RESULTS_DIR, "{cluster}", "{model_name}", "EPCrisprBenchmark_ensemble_data_GRCh38.K562_features_NAfilled.tsv.gz"), zip, cluster=BIOSAMPLE_DF["cluster"], model_name=BIOSAMPLE_DF["model_dir_base"])
+		crispr_features = expand(os.path.join(RESULTS_DIR, "{cluster}", "{model_name}", "EPCrisprBenchmark_ensemble_data_GRCh38.K562_features_NAfilled.tsv.gz"), zip, cluster=BIOSAMPLE_DF["cluster"], model_name=BIOSAMPLE_DF["model_dir_base"]),
 	output:
 		comp_table = os.path.join(RESULTS_DIR, "crispr_benchmarking_performance_summary.tsv")
 	params:
