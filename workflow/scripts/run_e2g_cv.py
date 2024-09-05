@@ -7,7 +7,7 @@ from scipy import interpolate
 
 SCORE_COL_BASE = "E2G.Score"
 
-def make_e2g_predictions(df_enhancers, feature_list, trained_model, tpm_threshold, epsilon):
+def make_e2g_predictions(df_enhancers, feature_list, trained_model, epsilon):
     # transform the features
     X = df_enhancers.loc[:, feature_list]
     X = np.log(np.abs(X) + epsilon)
@@ -16,18 +16,12 @@ def make_e2g_predictions(df_enhancers, feature_list, trained_model, tpm_threshol
         model = pickle.load(f)
     probs = model.predict_proba(X)
 
-    if ("RNA_pseudobulkTPM" in df_enhancers.columns) and (tpm_threshold > 0):
-        df_enhancers[SCORE_COL_BASE  + ".ignoreTPM"] = probs[:, 1]
-        df_enhancers[SCORE_COL_BASE] = [score if tpm >= tpm_threshold else 0 
-            for (score, tpm) in zip(df_enhancers[SCORE_COL_BASE + ".ignoreTPM"] , df_enhancers["RNA_pseudobulkTPM"])]
-    else:
-        df_enhancers[SCORE_COL_BASE] = probs[:, 1]
+    df_enhancers[SCORE_COL_BASE] = probs[:, 1]
 
     return df_enhancers
     
-def make_e2g_predictions_cv(df_enhancers, feature_list, cv_models, tpm_threshold, epsilon):
+def make_e2g_predictions_cv(df_enhancers, feature_list, cv_models, epsilon):
     score_col = SCORE_COL_BASE + '.cv'
-    tpm_filter = ("RNA_pseudobulkTPM" in df_enhancers.columns) and (tpm_threshold > 0)
 
     # get scores per chrom
     X = df_enhancers.loc[:,feature_list]
@@ -42,14 +36,7 @@ def make_e2g_predictions_cv(df_enhancers, feature_list, cv_models, tpm_threshold
             with open(os.path.join(cv_models, f"model_test_{chr}.pkl"), 'rb') as f:
                 model = pickle.load(f)
             probs = model.predict_proba(X_test)
-            print(f"Length of probs: {(probs.shape)}")
-            if tpm_filter:
-                print(f"Length of indexed df: {(len(df_enhancers.loc[idx_test, 'RNA_pseudobulkTPM']))}")
-                df_enhancers.loc[idx_test, score_col  + ".ignoreTPM"] = probs[:, 1]
-                df_enhancers.loc[idx_test, score_col] = [score if tpm >= tpm_threshold else 0 
-                    for (score, tpm) in zip(df_enhancers.loc[idx_test, score_col + ".ignoreTPM"] , df_enhancers.loc[idx_test, "RNA_pseudobulkTPM"])]
-            else:
-                df_enhancers.loc[idx_test, score_col] = probs[:,1]
+            df_enhancers.loc[idx_test, score_col] = probs[:,1]
 
     return df_enhancers
 
@@ -65,9 +52,8 @@ def qnorm_scores(df_enhancers, qnorm_ref, crispr_benchmarking):
     # generate reference
     #ref_quantiles = np.linspace(0.01, 0.99, 99, endpoint=True) # [0.01, 0.02, ... , 0.99]
     #n_unique_scores = len(np.unique(qnorm_ref))
-    n_unique_scores = 100000
-    ref_quantiles = np.linspace(0, 1, n_unique_scores, endpoint=True) # [0, 0.01, 0.02, ... , 0.99, 1]
-    ref_scores = np.quantile(qnorm_ref, ref_quantiles)
+    ref_quantiles = qnorm_ref["quantile"].to_numpy()
+    ref_scores = qnorm_ref["reference_score"].to_numpy()
     interpfunc = interpolate.interp1d(ref_quantiles, ref_scores, kind="linear", fill_value="extrapolate")
 
     # qnorm regular score
@@ -81,6 +67,21 @@ def qnorm_scores(df_enhancers, qnorm_ref, crispr_benchmarking):
     if str(crispr_benchmarking)=="True":
         cv_score_quantile = calculate_quantiles(df_enhancers[SCORE_COL_BASE + '.cv'])
         df_enhancers[SCORE_COL_BASE + '.cv.qnorm'] = interpfunc(cv_score_quantile).clip(0)
+
+    return df_enhancers
+
+def filter_by_tpm(df_enhancers, tpm_threshold, crispr_benchmarking):
+    if ("RNA_pseudobulkTPM" not in df_enhancers.columns) or (tpm_threshold==0):
+        return df_enhancers # don't filter
+    
+    df_enhancers[SCORE_COL_BASE  + ".qnorm.ignoreTPM"] = df_enhancers[SCORE_COL_BASE + ".qnorm"]
+    df_enhancers[SCORE_COL_BASE + ".qnorm"] = [score if tpm >= tpm_threshold else 0 
+            for (score, tpm) in zip(df_enhancers[SCORE_COL_BASE  + ".qnorm.ignoreTPM"] , df_enhancers["RNA_pseudobulkTPM"])]
+
+    if str(crispr_benchmarking)=="True":
+            df_enhancers[SCORE_COL_BASE  + ".cv.qnorm.ignoreTPM"] = df_enhancers[SCORE_COL_BASE + ".cv.qnorm"]
+            df_enhancers[SCORE_COL_BASE + ".cv.qnorm"] = [score if tpm >= tpm_threshold else 0 
+                 for (score, tpm) in zip(df_enhancers[SCORE_COL_BASE  + ".cv.qnorm.ignoreTPM"] , df_enhancers["RNA_pseudobulkTPM"])]
 
     return df_enhancers
     
@@ -104,17 +105,17 @@ def main(predictions, feature_table_file, trained_model, model_dir, crispr_bench
     df_enhancers = df_enhancers.fillna(0)
 
     # read in qnorm ref
-    qnorm_file = os.path.join(model_dir, "qnorm_reference.tsv.gz") # col name = "E2G.Score'"
+    qnorm_file = os.path.join(model_dir, "qnorm_reference.tsv.gz") # col name = "E2G.Score.ignoreTPM"
     qnorm_ref = pd.read_csv(qnorm_file, sep="\t")
-    qnorm_ref = qnorm_ref['E2G.Score'].to_numpy()
 
-    df_enhancers = make_e2g_predictions(df_enhancers, feature_list, trained_model, tpm_threshold, epsilon)  # add "E2G.Score" and potentially "E2G.Score.ignoreTPM"
+    df_enhancers = make_e2g_predictions(df_enhancers, feature_list, trained_model, epsilon)  # add "E2G.Score" 
     
     if str(crispr_benchmarking)=="True":
         cv_models = os.path.join(model_dir, "cv_models")
-        df_enhancers = make_e2g_predictions_cv(df_enhancers, feature_list, cv_models, tpm_threshold, epsilon) # add "E2G.Score.cv" and potentially "E2G.Score.cv.gnoreTPM"
+        df_enhancers = make_e2g_predictions_cv(df_enhancers, feature_list, cv_models, epsilon) # add "E2G.Score.cv"
 
     df_enhancers = qnorm_scores(df_enhancers, qnorm_ref, crispr_benchmarking) # add "E2G.Score.qnorm" &  if crispr_benchmarking, "E2G.Score.cv.qnorm"
+    df_enhancers = filter_by_tpm(df_enhancers, tpm_threshold, crispr_benchmarking) # if required, add "E2G.Score.qnorm.ignoreTPM" &  if crispr_benchmarking, "E2G.Score.cv.qnorm.ignoreTPM" and filter the other columns
 
     df_enhancers.to_csv(output_file, compression="gzip", sep="\t", index=False)
 

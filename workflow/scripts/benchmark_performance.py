@@ -96,7 +96,7 @@ def main(crispr_features, output_file, model_names, model_thresholds):
 
 	# add ABC
 	all_models = preds["model_name"].unique().tolist()
-	sc_e2g = [m for m in all_models if m in ["multiome_7features", "scATAC_6features"]]
+	sc_e2g = [m for m in all_models if m in ["multiome_powerlaw_v2", "scATAC_powerlaw_v2"]]
 
 	if len(sc_e2g) > 0:
 		filt = preds.loc[preds["model_name"]==sc_e2g[0]]
