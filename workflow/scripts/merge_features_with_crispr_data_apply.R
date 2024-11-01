@@ -53,7 +53,7 @@ merge_feature_to_crispr <- function(crispr, features, feature_score_cols, agg_fu
     missing[[i]] <- fill_value
   }
 
-  # only return crispr pairs that overlap features
+  # add missing values
   output <- rbind(merged, missing)
 
   # sort output by cre position
@@ -87,7 +87,7 @@ crispr <- select(crispr, -c(pair_uid, merged_uid, merged_start, merged_end))
 
 # load feature config file and only retain entries for features in input data
 config <- fread(snakemake@input$feature_table_file) %>% select(feature, aggregate_function, fill_value)
-score_rows = data.frame(feature=c("E2G.Score", "E2G.Score.cv", "E2G.Score.cv.ignoreTPM", "E2G.Score.qnorm", "E2G.Score.cv.qnorm"))
+score_rows = data.frame(feature=c("E2G.Score", "E2G.Score.cv", "E2G.Score.cv.qnorm.ignoreTPM", "E2G.Score.qnorm", "E2G.Score.cv.qnorm", "E2G.Score.qnorm.ignoreTPM"))
 score_rows$aggregate_function = "mean"
 score_rows$fill_value = 0
 config = rbind(config, score_rows)
