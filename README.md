@@ -1,5 +1,6 @@
 # scE2G
 Pipeline for running scE2G
+This project is licensed under the terms of the MIT license.
 
 Input: Single-cell ATAC-seq or paired ATAC and RNA-seq (mulitome) data per cell cluster
 Output: Genomewide enhancer-gene regulatory link predictions per cell cluster
