@@ -1,6 +1,6 @@
 CircleCI [![CircleCI](https://dl.circleci.com/status-badge/img/gh/EngreitzLab/sc-E2G.svg?style=svg)](https://app.circleci.com/pipelines/github/EngreitzLab/sc-E2G?branch=main)
 
-# sc-E2G
+# scE2G
 Pipeline for running single cell ENCODE-rE2G.
 
 Input: Multiome dataset (ATAC and RNA)
@@ -17,7 +17,7 @@ The pipeline consists of the following components:
 ## Set up
 Clone the repo and set it up for submdoule usage
 ```
-git clone --recurse-submodules https://github.com/EngreitzLab/sc-E2G.git
+git clone --recurse-submodules https://github.com/EngreitzLab/scE2G.git
 git config --global submodule.recurse true
 ```
 
